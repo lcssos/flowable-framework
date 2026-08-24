@@ -7,6 +7,7 @@ import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
 import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.runtime.ProcessInstance;
+import org.flowable.task.api.Task;
 import org.flowable.task.api.TaskQuery;
 import org.springframework.stereotype.Component;
 
@@ -52,6 +53,28 @@ public class WorkflowAccess {
             return;
         }
         throw BusinessException.forbidden("cannot access process instance");
+    }
+
+    public void ensureCanActOnTask(Task task, CurrentUser user) {
+        if (user.admin()) {
+            return;
+        }
+        String userId = user.userId();
+        if (userId.equals(task.getAssignee())) {
+            return;
+        }
+        TaskQuery query = taskService.createTaskQuery()
+                .taskId(task.getId())
+                .or()
+                .taskAssignee(userId)
+                .taskCandidateUser(userId);
+        if (!user.groupIds().isEmpty()) {
+            query.taskCandidateGroupIn(user.groupIds());
+        }
+        if (query.endOr().count() > 0) {
+            return;
+        }
+        throw BusinessException.forbidden("cannot act on task");
     }
 
     public void requireProcessInstance(String id) {
