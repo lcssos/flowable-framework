@@ -25,6 +25,7 @@ public class WorkflowAccess {
     }
 
     public void ensureCanSeeProcess(String processInstanceId, CurrentUser user) {
+        requireProcessInstance(processInstanceId);
         if (user.admin()) {
             return;
         }
@@ -50,6 +51,19 @@ public class WorkflowAccess {
             taskQuery.taskCandidateGroupIn(user.groupIds());
         }
         if (taskQuery.endOr().count() > 0) {
+            return;
+        }
+        HistoricProcessInstance historic = historyService.createHistoricProcessInstanceQuery()
+                .processInstanceId(processInstanceId)
+                .singleResult();
+        if (historic != null && user.userId().equals(historic.getStartUserId())) {
+            return;
+        }
+        if (historyService.createHistoricProcessInstanceQuery()
+                .processInstanceId(processInstanceId)
+                .involvedUser(user.userId())
+                .count()
+                > 0) {
             return;
         }
         throw BusinessException.forbidden("cannot access process instance");
