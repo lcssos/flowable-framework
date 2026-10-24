@@ -1,8 +1,9 @@
-package com.example.flowable.workflow;
+package com.example.flowable.workflow.service;
 
-import com.example.flowable.common.api.PageData;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.example.flowable.common.pagination.PaginationHelper;
 import com.example.flowable.common.exception.BusinessException;
-import com.example.flowable.identity.CurrentUser;
+import com.example.flowable.identity.dto.CurrentUser;
 import com.example.flowable.workflow.dto.ProcessInstanceDetail;
 import com.example.flowable.workflow.dto.ProcessInstanceView;
 import com.example.flowable.workflow.dto.TaskView;
@@ -31,7 +32,7 @@ public class ProcessQueryService {
         this.workflowAccess = workflowAccess;
     }
 
-    public PageData<ProcessInstanceView> listRuntime(int page, int size, CurrentUser user) {
+    public Page<ProcessInstanceView> listRuntime(int page, int size, CurrentUser user) {
         if (page < 1 || size < 1) {
             throw BusinessException.badRequest("page and size must be >= 1");
         }
@@ -43,7 +44,7 @@ public class ProcessQueryService {
         query.orderByStartTime().desc();
         long total = query.count();
         List<ProcessInstanceView> items = query.listPage(start, size).stream().map(ProcessQueryService::toView).toList();
-        return new PageData<>(page, size, total, items);
+        return PaginationHelper.buildPage(page, size, total, items);
     }
 
     public ProcessInstanceDetail getRuntime(String id, CurrentUser user) {

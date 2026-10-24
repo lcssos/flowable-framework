@@ -1,7 +1,7 @@
-package com.example.flowable.workflow;
+package com.example.flowable.workflow.service;
 
 import com.example.flowable.common.exception.BusinessException;
-import com.example.flowable.identity.CurrentUser;
+import com.example.flowable.identity.dto.CurrentUser;
 import org.flowable.engine.HistoryService;
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;

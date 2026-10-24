@@ -1,4 +1,4 @@
-package com.example.flowable.identity;
+package com.example.flowable.identity.dto;
 
 import java.util.Set;
 

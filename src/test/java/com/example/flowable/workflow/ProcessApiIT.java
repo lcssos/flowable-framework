@@ -1,6 +1,7 @@
 package com.example.flowable.workflow;
 
-import com.example.flowable.support.MvcAuth;
+import com.example.flowable.support.MockMvcAuthenticationHelper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -21,10 +22,17 @@ class ProcessApiIT {
     @Autowired
     MockMvc mockMvc;
 
+    private MockMvcAuthenticationHelper authenticationHelper;
+
+    @BeforeEach
+    void setUp() {
+        authenticationHelper = new MockMvcAuthenticationHelper(mockMvc);
+    }
+
     @Test
     void unknownProcessKeyIs404() throws Exception {
         mockMvc.perform(post("/api/process-definitions/missing/start")
-                        .with(MvcAuth.zhangsan())
+                        .with(authenticationHelper.zhangsan())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"days\":1,\"reason\":\"x\"}"))
                 .andExpect(status().isNotFound())
@@ -34,7 +42,7 @@ class ProcessApiIT {
     @Test
     void leaveRequiresPositiveDays() throws Exception {
         mockMvc.perform(post("/api/process-definitions/leave/start")
-                        .with(MvcAuth.zhangsan())
+                        .with(authenticationHelper.zhangsan())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"days\":0,\"reason\":\"x\"}"))
                 .andExpect(status().isBadRequest())
@@ -44,7 +52,7 @@ class ProcessApiIT {
     @Test
     void zhangsanStartsLeaveAndListsOwnInstance() throws Exception {
         MvcResult created = mockMvc.perform(post("/api/process-definitions/leave/start")
-                        .with(MvcAuth.zhangsan())
+                        .with(authenticationHelper.zhangsan())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"days\":2,\"reason\":\"家庭事务\"}"))
                 .andExpect(status().isOk())
@@ -55,15 +63,15 @@ class ProcessApiIT {
 
         String id = com.jayway.jsonpath.JsonPath.read(created.getResponse().getContentAsString(), "$.data.id");
 
-        mockMvc.perform(get("/api/process-instances").with(MvcAuth.zhangsan()))
+        mockMvc.perform(get("/api/process-instances").with(authenticationHelper.zhangsan()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.items[*].id").value(org.hamcrest.Matchers.hasItem(id)));
+                .andExpect(jsonPath("$.data.records[*].id").value(org.hamcrest.Matchers.hasItem(id)));
 
-        mockMvc.perform(get("/api/process-instances/" + id).with(MvcAuth.zhangsan()))
+        mockMvc.perform(get("/api/process-instances/" + id).with(authenticationHelper.zhangsan()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.currentTasks[0].taskDefinitionKey").value("managerApproval"));
 
-        mockMvc.perform(get("/api/process-instances/" + id).with(MvcAuth.wangwu()))
+        mockMvc.perform(get("/api/process-instances/" + id).with(authenticationHelper.wangwu()))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(40300));
     }
@@ -71,7 +79,7 @@ class ProcessApiIT {
     @Test
     void starterCanDeleteRunningInstance() throws Exception {
         MvcResult created = mockMvc.perform(post("/api/process-definitions/leave/start")
-                        .with(MvcAuth.zhangsan())
+                        .with(authenticationHelper.zhangsan())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"days\":1,\"reason\":\"x\"}"))
                 .andExpect(status().isOk())
@@ -79,10 +87,10 @@ class ProcessApiIT {
 
         String id = com.jayway.jsonpath.JsonPath.read(created.getResponse().getContentAsString(), "$.data.id");
 
-        mockMvc.perform(post("/api/process-instances/" + id + "/delete").with(MvcAuth.zhangsan()))
+        mockMvc.perform(post("/api/process-instances/" + id + "/delete").with(authenticationHelper.zhangsan()))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(get("/api/process-instances/" + id).with(MvcAuth.zhangsan()))
+        mockMvc.perform(get("/api/process-instances/" + id).with(authenticationHelper.zhangsan()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(40400));
     }

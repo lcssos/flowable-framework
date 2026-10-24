@@ -1,8 +1,9 @@
-package com.example.flowable.workflow;
+package com.example.flowable.workflow.service;
 
-import com.example.flowable.common.api.PageData;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.example.flowable.common.pagination.PaginationHelper;
 import com.example.flowable.common.exception.BusinessException;
-import com.example.flowable.identity.CurrentUser;
+import com.example.flowable.identity.dto.CurrentUser;
 import com.example.flowable.workflow.dto.TaskView;
 import org.flowable.engine.TaskService;
 import org.flowable.task.api.Task;
@@ -26,7 +27,7 @@ public class WorkflowTaskService {
         this.workflowAccess = workflowAccess;
     }
 
-    public PageData<TaskView> list(int page, int size, CurrentUser user) {
+    public Page<TaskView> list(int page, int size, CurrentUser user) {
         if (page < 1 || size < 1) {
             throw BusinessException.badRequest("page and size must be >= 1");
         }
@@ -42,7 +43,7 @@ public class WorkflowTaskService {
         query.orderByTaskCreateTime().desc();
         long total = query.count();
         List<TaskView> items = query.listPage(start, size).stream().map(WorkflowTaskService::toTaskView).toList();
-        return new PageData<>(page, size, total, items);
+        return PaginationHelper.buildPage(page, size, total, items);
     }
 
     public void claim(String taskId, CurrentUser user) {

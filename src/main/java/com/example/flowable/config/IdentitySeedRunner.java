@@ -6,32 +6,46 @@ import org.flowable.idm.api.User;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
+import com.example.flowable.identity.service.SystemUserService;
 
 @Component
 public class IdentitySeedRunner implements ApplicationRunner {
 
-    private static final String PASSWORD = "{noop}test";
+    private static final String PASSWORD = "test";
+    private static final String FLOWABLE_PASSWORD = "{noop}test";
 
+    private final SystemUserService systemUserService;
     private final IdentityService identityService;
 
-    public IdentitySeedRunner(IdentityService identityService) {
+    public IdentitySeedRunner(SystemUserService systemUserService, IdentityService identityService) {
+        this.systemUserService = systemUserService;
         this.identityService = identityService;
     }
 
     @Override
     public void run(ApplicationArguments args) {
-        ensureGroup("admins");
-        ensureGroup("employees");
-        ensureGroup("managers");
-        ensureGroup("hr");
+        systemUserService.ensureGroup("admins", "admins");
+        systemUserService.ensureGroup("employees", "employees");
+        systemUserService.ensureGroup("managers", "managers");
+        systemUserService.ensureGroup("hr", "hr");
 
-        ensureUser("admin", "admins");
-        ensureUser("zhangsan", "employees");
-        ensureUser("lisi", "managers");
-        ensureUser("wangwu", "hr");
+        systemUserService.ensureUser("admin", PASSWORD, "admins");
+        systemUserService.ensureUser("zhangsan", PASSWORD, "employees");
+        systemUserService.ensureUser("lisi", PASSWORD, "managers");
+        systemUserService.ensureUser("wangwu", PASSWORD, "hr");
+
+        ensureFlowableGroup("admins");
+        ensureFlowableGroup("employees");
+        ensureFlowableGroup("managers");
+        ensureFlowableGroup("hr");
+
+        ensureFlowableUser("admin", "admins");
+        ensureFlowableUser("zhangsan", "employees");
+        ensureFlowableUser("lisi", "managers");
+        ensureFlowableUser("wangwu", "hr");
     }
 
-    private void ensureGroup(String groupId) {
+    private void ensureFlowableGroup(String groupId) {
         if (identityService.createGroupQuery().groupId(groupId).count() == 0) {
             Group group = identityService.newGroup(groupId);
             group.setName(groupId);
@@ -39,10 +53,10 @@ public class IdentitySeedRunner implements ApplicationRunner {
         }
     }
 
-    private void ensureUser(String userId, String groupId) {
+    private void ensureFlowableUser(String userId, String groupId) {
         if (identityService.createUserQuery().userId(userId).count() == 0) {
             User user = identityService.newUser(userId);
-            user.setPassword(PASSWORD);
+            user.setPassword(FLOWABLE_PASSWORD);
             identityService.saveUser(user);
             identityService.createMembership(userId, groupId);
         }

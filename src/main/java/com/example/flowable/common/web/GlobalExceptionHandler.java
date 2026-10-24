@@ -1,7 +1,10 @@
 package com.example.flowable.common.web;
 
+import cn.dev33.satoken.exception.NotLoginException;
+import cn.dev33.satoken.exception.NotPermissionException;
+import cn.dev33.satoken.exception.NotRoleException;
+import com.example.flowable.common.api.ApiResponse;
 import com.example.flowable.common.api.ErrorCodes;
-import com.example.flowable.common.api.R;
 import com.example.flowable.common.exception.BusinessException;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;
@@ -16,20 +19,33 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<R<Void>> handleBusiness(BusinessException ex) {
-        return ResponseEntity.status(ex.getStatus()).body(R.fail(ex.getCode(), ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleBusiness(BusinessException exception) {
+        return ResponseEntity.status(exception.getStatus())
+                .body(ApiResponse.fail(exception.getCode(), exception.getMessage()));
+    }
+
+    @ExceptionHandler(NotLoginException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNotLogin(NotLoginException exception) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.fail(ErrorCodes.UNAUTHORIZED, "unauthorized"));
+    }
+
+    @ExceptionHandler({NotPermissionException.class, NotRoleException.class})
+    public ResponseEntity<ApiResponse<Void>> handleNotPermission(RuntimeException exception) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.fail(ErrorCodes.FORBIDDEN, "forbidden"));
     }
 
     @ExceptionHandler(FlowableObjectNotFoundException.class)
-    public ResponseEntity<R<Void>> handleFlowableNotFound(FlowableObjectNotFoundException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleFlowableNotFound(FlowableObjectNotFoundException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(R.fail(ErrorCodes.NOT_FOUND, ex.getMessage()));
+                .body(ApiResponse.fail(ErrorCodes.NOT_FOUND, exception.getMessage()));
     }
 
     @ExceptionHandler(FlowableException.class)
-    public ResponseEntity<R<Void>> handleFlowable(FlowableException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleFlowable(FlowableException exception) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(R.fail(ErrorCodes.INTERNAL, "internal error"));
+                .body(ApiResponse.fail(ErrorCodes.INTERNAL, "internal error"));
     }
 
     @ExceptionHandler({
@@ -37,15 +53,15 @@ public class GlobalExceptionHandler {
             HandlerMethodValidationException.class,
             IllegalArgumentException.class
     })
-    public ResponseEntity<R<Void>> handleBadRequest(Exception ex) {
-        String message = ex.getMessage() != null ? ex.getMessage() : "bad request";
+    public ResponseEntity<ApiResponse<Void>> handleBadRequest(Exception exception) {
+        String message = exception.getMessage() != null ? exception.getMessage() : "bad request";
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(R.fail(ErrorCodes.BAD_REQUEST, message));
+                .body(ApiResponse.fail(ErrorCodes.BAD_REQUEST, message));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<R<Void>> handleOther(Exception ex) {
+    public ResponseEntity<ApiResponse<Void>> handleOther(Exception exception) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(R.fail(ErrorCodes.INTERNAL, "internal error"));
+                .body(ApiResponse.fail(ErrorCodes.INTERNAL, "internal error"));
     }
 }

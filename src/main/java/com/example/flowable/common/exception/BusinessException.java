@@ -25,6 +25,10 @@ public final class BusinessException extends RuntimeException {
         return new BusinessException(ErrorCodes.NOT_FOUND, HttpStatus.NOT_FOUND, message);
     }
 
+    public static BusinessException unauthorized(String message) {
+        return new BusinessException(ErrorCodes.UNAUTHORIZED, HttpStatus.UNAUTHORIZED, message);
+    }
+
     public int getCode() {
         return code;
     }

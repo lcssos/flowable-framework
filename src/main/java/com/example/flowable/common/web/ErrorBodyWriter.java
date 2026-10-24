@@ -1,6 +1,6 @@
 package com.example.flowable.common.web;
 
-import com.example.flowable.common.api.R;
+import com.example.flowable.common.api.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
@@ -20,6 +20,6 @@ public class ErrorBodyWriter {
     public void write(HttpServletResponse response, int httpStatus, int code, String message) throws IOException {
         response.setStatus(httpStatus);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        objectMapper.writeValue(response.getOutputStream(), R.fail(code, message));
+        objectMapper.writeValue(response.getOutputStream(), ApiResponse.fail(code, message));
     }
 }

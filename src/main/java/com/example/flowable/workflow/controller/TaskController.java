@@ -1,9 +1,10 @@
-package com.example.flowable.workflow;
+package com.example.flowable.workflow.controller;
 
-import com.example.flowable.common.api.PageData;
-import com.example.flowable.common.api.R;
-import com.example.flowable.identity.CurrentUsers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.example.flowable.common.api.ApiResponse;
+import com.example.flowable.identity.service.CurrentUsers;
 import com.example.flowable.workflow.dto.TaskView;
+import com.example.flowable.workflow.service.WorkflowTaskService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,21 +28,21 @@ public class TaskController {
     }
 
     @GetMapping
-    public R<PageData<TaskView>> list(
+    public ApiResponse<Page<TaskView>> list(
             @RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "20") int size) {
-        return R.ok(workflowTaskService.list(page, size, currentUsers.require()));
+        return ApiResponse.ok(workflowTaskService.list(page, size, currentUsers.require()));
     }
 
     @PostMapping("/{id}/claim")
-    public R<Void> claim(@PathVariable("id") String id) {
+    public ApiResponse<Void> claim(@PathVariable("id") String id) {
         workflowTaskService.claim(id, currentUsers.require());
-        return R.ok();
+        return ApiResponse.ok();
     }
 
     @PostMapping("/{id}/complete")
-    public R<Void> complete(
+    public ApiResponse<Void> complete(
             @PathVariable("id") String id, @RequestBody(required = false) Map<String, Object> variables) {
         workflowTaskService.complete(id, variables, currentUsers.require());
-        return R.ok();
+        return ApiResponse.ok();
     }
 }

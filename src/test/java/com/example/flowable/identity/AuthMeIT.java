@@ -1,6 +1,7 @@
 package com.example.flowable.identity;
 
-import com.example.flowable.support.MvcAuth;
+import com.example.flowable.support.MockMvcAuthenticationHelper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -18,6 +19,13 @@ class AuthMeIT {
     @Autowired
     MockMvc mockMvc;
 
+    private MockMvcAuthenticationHelper authenticationHelper;
+
+    @BeforeEach
+    void setUp() {
+        authenticationHelper = new MockMvcAuthenticationHelper(mockMvc);
+    }
+
     @Test
     void unauthenticatedMeIs401() throws Exception {
         mockMvc.perform(get("/api/auth/me"))
@@ -27,7 +35,7 @@ class AuthMeIT {
 
     @Test
     void zhangsanMeReturnsEmployeeGroup() throws Exception {
-        mockMvc.perform(get("/api/auth/me").with(MvcAuth.zhangsan()))
+        mockMvc.perform(get("/api/auth/me").with(authenticationHelper.zhangsan()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.userId").value("zhangsan"))
@@ -37,7 +45,7 @@ class AuthMeIT {
 
     @Test
     void adminMeIsAdmin() throws Exception {
-        mockMvc.perform(get("/api/auth/me").with(MvcAuth.admin()))
+        mockMvc.perform(get("/api/auth/me").with(authenticationHelper.admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.admin").value(true));
     }

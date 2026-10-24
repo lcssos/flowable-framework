@@ -7,5 +7,32 @@ spring:
   h2:
     console:
       enabled: false
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema/app-schema.sql
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+
+sa-token:
+  token-name: satoken
+  timeout: 86400
+  is-log: false
+
 flowable:
   database-schema-update: true
+  cmmn:
+    database-schema-update: true
+  dmn:
+    database-schema-update: true
+  app:
+    database-schema-update: true
+  idm:
+    database-schema-update: true
+  eventregistry:
+    database-schema-update: true
