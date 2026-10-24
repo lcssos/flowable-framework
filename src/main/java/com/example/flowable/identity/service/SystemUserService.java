@@ -1,5 +1,6 @@
 package com.example.flowable.identity.service;
 
+import cn.dev33.satoken.secure.BCrypt;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.flowable.common.exception.BusinessException;
 import com.example.flowable.identity.entity.SystemGroupEntity;
@@ -8,7 +9,6 @@ import com.example.flowable.identity.entity.SystemUserGroupEntity;
 import com.example.flowable.identity.mapper.SystemGroupMapper;
 import com.example.flowable.identity.mapper.SystemUserGroupMapper;
 import com.example.flowable.identity.mapper.SystemUserMapper;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashSet;
@@ -21,17 +21,14 @@ public class SystemUserService {
     private final SystemUserMapper systemUserMapper;
     private final SystemGroupMapper systemGroupMapper;
     private final SystemUserGroupMapper systemUserGroupMapper;
-    private final PasswordEncoder passwordEncoder;
 
     public SystemUserService(
             SystemUserMapper systemUserMapper,
             SystemGroupMapper systemGroupMapper,
-            SystemUserGroupMapper systemUserGroupMapper,
-            PasswordEncoder passwordEncoder) {
+            SystemUserGroupMapper systemUserGroupMapper) {
         this.systemUserMapper = systemUserMapper;
         this.systemGroupMapper = systemGroupMapper;
         this.systemUserGroupMapper = systemUserGroupMapper;
-        this.passwordEncoder = passwordEncoder;
     }
 
     public void authenticate(String username, String rawPassword) {
@@ -39,7 +36,7 @@ public class SystemUserService {
         if (user == null || !Boolean.TRUE.equals(user.getEnabled())) {
             throw BusinessException.unauthorized("invalid username or password");
         }
-        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
+        if (!BCrypt.checkpw(rawPassword, user.getPassword())) {
             throw BusinessException.unauthorized("invalid username or password");
         }
     }
@@ -76,7 +73,7 @@ public class SystemUserService {
         if (user == null) {
             user = new SystemUserEntity();
             user.setUsername(username);
-            user.setPassword(passwordEncoder.encode(rawPassword));
+            user.setPassword(BCrypt.hashpw(rawPassword));
             user.setEnabled(true);
             systemUserMapper.insert(user);
         }
