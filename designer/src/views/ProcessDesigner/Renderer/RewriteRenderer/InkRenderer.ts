@@ -238,6 +238,195 @@ const weaveHops = (points: Waypoint[], hits: { index: number; t: number; at: Way
   return woven
 }
 
+type Span = { enter: number; leave: number }
+
+const lerp = (from: Waypoint, to: Waypoint, t: number): Waypoint => ({
+  x: from.x + (to.x - from.x) * t,
+  y: from.y + (to.y - from.y) * t,
+})
+
+const mergeSpans = (spans: Span[]) => {
+  const merged: Span[] = []
+  spans
+    .map((span) => ({
+      enter: span.enter < 0.012 ? 0 : span.enter,
+      leave: span.leave > 0.988 ? 1 : span.leave,
+    }))
+    .filter((span) => span.leave - span.enter > 0.02)
+    .sort((left, right) => left.enter - right.enter)
+    .forEach((span) => {
+      const last = merged[merged.length - 1]
+      if (last && span.enter <= last.leave + 0.01) {
+        last.leave = Math.max(last.leave, span.leave)
+        return
+      }
+      merged.push({ ...span })
+    })
+  return merged
+}
+
+const rectSpan = (
+  rect: { x: number; y: number; width: number; height: number },
+  from: Waypoint,
+  to: Waypoint,
+): Span | null => {
+  const dx = to.x - from.x
+  const dy = to.y - from.y
+  let enter = 0
+  let leave = 1
+  const edges = [
+    [-dx, from.x - rect.x],
+    [dx, rect.x + rect.width - from.x],
+    [-dy, from.y - rect.y],
+    [dy, rect.y + rect.height - from.y],
+  ]
+  for (const [delta, distance] of edges) {
+    if (Math.abs(delta) < 1e-6) {
+      if (distance < -0.5) {
+        return null
+      }
+      continue
+    }
+    const ratio = distance / delta
+    if (delta < 0) {
+      if (ratio > leave) {
+        return null
+      }
+      if (ratio > enter) {
+        enter = ratio
+      }
+    } else if (ratio < enter) {
+      return null
+    } else if (ratio < leave) {
+      leave = ratio
+    }
+  }
+  return leave - enter > 0.02 ? { enter, leave } : null
+}
+
+const edgeCross = (from: Waypoint, to: Waypoint, otherFrom: Waypoint, otherTo: Waypoint) => {
+  const rx = to.x - from.x
+  const ry = to.y - from.y
+  const sx = otherTo.x - otherFrom.x
+  const sy = otherTo.y - otherFrom.y
+  const denom = rx * sy - ry * sx
+  if (Math.abs(denom) < 0.001) {
+    return null
+  }
+  const qpx = otherFrom.x - from.x
+  const qpy = otherFrom.y - from.y
+  const t = (qpx * sy - qpy * sx) / denom
+  const u = (qpx * ry - qpy * rx) / denom
+  if (t <= 0.001 || t >= 0.999 || u < -0.001 || u > 1.001) {
+    return null
+  }
+  return t
+}
+
+const convexSpan = (
+  from: Waypoint,
+  to: Waypoint,
+  contains: (point: Waypoint) => boolean,
+  edges: [Waypoint, Waypoint][],
+): Span | null => {
+  const marks = edges
+    .map(([start, end]) => edgeCross(from, to, start, end))
+    .filter((t): t is number => t !== null)
+  if (contains(from)) {
+    marks.push(0)
+  }
+  if (contains(to)) {
+    marks.push(1)
+  }
+  if (marks.length < 2) {
+    return null
+  }
+  marks.sort((left, right) => left - right)
+  const enter = marks[0]
+  const leave = marks[marks.length - 1]
+  return leave - enter > 0.02 ? { enter, leave } : null
+}
+
+const circleSpan = (from: Waypoint, to: Waypoint, center: Waypoint, radius: number) => {
+  const dx = to.x - from.x
+  const dy = to.y - from.y
+  const contains = (point: Waypoint) => {
+    const ox = point.x - center.x
+    const oy = point.y - center.y
+    return ox * ox + oy * oy <= radius * radius + 0.25
+  }
+  const length = dx * dx + dy * dy
+  if (length < 1e-6) {
+    return contains(from) ? { enter: 0, leave: 1 } : null
+  }
+  const fx = from.x - center.x
+  const fy = from.y - center.y
+  const b = 2 * (fx * dx + fy * dy)
+  const c = fx * fx + fy * fy - radius * radius
+  const disc = b * b - 4 * length
+  const marks: number[] = []
+  if (contains(from)) {
+    marks.push(0)
+  }
+  if (contains(to)) {
+    marks.push(1)
+  }
+  if (disc >= 0) {
+    const root = Math.sqrt(disc)
+    ;[(-b - root) / (2 * length), (-b + root) / (2 * length)].forEach((t) => {
+      if (t > 0.001 && t < 0.999) {
+        marks.push(t)
+      }
+    })
+  }
+  if (marks.length < 2) {
+    return null
+  }
+  marks.sort((left, right) => left - right)
+  return { enter: marks[0], leave: marks[marks.length - 1] }
+}
+
+const shapeInteriorSpan = (shape: Shape, from: Waypoint, to: Waypoint) => {
+  if (isAny(shape, TASK_TYPES)) {
+    return rectSpan(visualRect(shape), from, to)
+  }
+  if (is(shape, 'bpmn:Event')) {
+    return circleSpan(
+      from,
+      to,
+      { x: shape.x + shape.width / 2, y: shape.y + shape.height / 2 },
+      Math.min(shape.width, shape.height) / 2,
+    )
+  }
+  if (!is(shape, 'bpmn:Gateway')) {
+    return null
+  }
+  const cx = shape.x + shape.width / 2
+  const cy = shape.y + shape.height / 2
+  const corners = [
+    { x: cx, y: shape.y },
+    { x: shape.x + shape.width, y: cy },
+    { x: cx, y: shape.y + shape.height },
+    { x: shape.x, y: cy },
+  ]
+  const halfWidth = shape.width / 2 || 1
+  const halfHeight = shape.height / 2 || 1
+  return convexSpan(
+    from,
+    to,
+    (point) =>
+      Math.abs(point.x - cx) / halfWidth + Math.abs(point.y - cy) / halfHeight <= 1.02,
+    [
+      [corners[0], corners[1]],
+      [corners[1], corners[2]],
+      [corners[2], corners[3]],
+      [corners[3], corners[0]],
+    ],
+  )
+}
+
+type StrokeRun = { points: Waypoint[]; dotted: boolean }
+
 const append = (parent: SVGElement, name: string, attrs: Record<string, string | number>) => {
   const node = svgCreate(name, attrs)
   svgAppend(parent, node)
@@ -461,6 +650,22 @@ export default class InkRenderer extends BaseRenderer {
     this.registry = elementRegistry
     this.graphics = graphicsFactory
     installInkIcons()
+    // 穿过节点的圆点取决于节点位置。节点移动不会改顺序流的航点，需要主动重画。
+    eventBus.on('element.changed', (event: { element?: Element }) => {
+      const moved = event.element
+      if (!moved?.parent || isLabel(moved) || 'waypoints' in moved || !isAny(moved, SHAPE_TYPES)) {
+        return
+      }
+      elementRegistry.forEach((item) => {
+        if (!item.parent || !('waypoints' in item) || !is(item, 'bpmn:SequenceFlow')) {
+          return
+        }
+        if (item.source === moved || item.target === moved) {
+          return
+        }
+        this.queueCrossingRefresh(item)
+      })
+    })
     window.addEventListener('designer-theme', () => {
       const shapes: Element[] = []
       const flows: Element[] = []
@@ -506,26 +711,38 @@ export default class InkRenderer extends BaseRenderer {
     const points = this.withPassArcs(element, dockedWaypoints(element))
     const color = getStrokeColor(element, INK.stroke)
     const message = is(element, 'bpmn:MessageFlow')
-    const attrs: Record<string, string | number> = {
-      stroke: color,
-      strokeWidth: message ? 1.5 : 1.75,
-      strokeLinecap: 'round',
-      strokeLinejoin: 'round',
-      fill: 'none',
-      markerEnd: arrowMarker(parent, color),
-    }
-    if (message) {
-      attrs.strokeDasharray = '8 6'
-      attrs.markerStart = dotMarker(parent, color)
-    } else {
-      const start = this.flowStartMarker(parent, element, color)
-      if (start) {
-        attrs.markerStart = start
+    const runs = message
+      ? [{ points, dotted: false }]
+      : this.passingRuns(element, points)
+    let drawn: SVGElement | undefined
+    runs.forEach((run, index) => {
+      const attrs: Record<string, string | number> = {
+        stroke: color,
+        strokeWidth: message ? 1.5 : 1.75,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+        fill: 'none',
       }
-    }
-    const line = createLine(points, attrs)
-    svgAppend(parent, line)
-    return line
+      if (message) {
+        attrs.strokeDasharray = '8 6'
+        attrs.markerStart = dotMarker(parent, color)
+      } else if (run.dotted) {
+        attrs.strokeDasharray = '1 4'
+      }
+      if (!message && index === 0) {
+        const start = this.flowStartMarker(parent, element, color)
+        if (start) {
+          attrs.markerStart = start
+        }
+      }
+      if (index === runs.length - 1) {
+        attrs.markerEnd = arrowMarker(parent, color)
+      }
+      const line = createLine(run.points, attrs)
+      svgAppend(parent, line)
+      drawn = line
+    })
+    return drawn ?? createLine(points, { stroke: color, fill: 'none' })
   }
 
   getShapePath(element: Shape) {
@@ -586,6 +803,53 @@ export default class InkRenderer extends BaseRenderer {
       }
     })
     return weaveHops(points, hits)
+  }
+
+  private passingRuns(connection: Connection, points: Waypoint[]) {
+    const runs: StrokeRun[] = []
+    const shapes: Shape[] = []
+    this.registry.forEach((item) => {
+      if (!item.parent || isLabel(item) || 'waypoints' in item) {
+        return
+      }
+      if (item === connection.source || item === connection.target || !isAny(item, SHAPE_TYPES)) {
+        return
+      }
+      shapes.push(item as Shape)
+    })
+    const push = (dotted: boolean, from: Waypoint, to: Waypoint) => {
+      if (Math.hypot(to.x - from.x, to.y - from.y) < 0.4) {
+        return
+      }
+      const last = runs[runs.length - 1]
+      if (last?.dotted === dotted) {
+        last.points.push(to)
+        return
+      }
+      runs.push({ dotted, points: [from, to] })
+    }
+    for (let index = 0; index < points.length - 1; index += 1) {
+      const from = points[index]
+      const to = points[index + 1]
+      const spans = mergeSpans(
+        shapes
+          .map((shape) => shapeInteriorSpan(shape, from, to))
+          .filter((span): span is Span => Boolean(span)),
+      )
+      const cuts = [0, ...spans.flatMap((span) => [span.enter, span.leave]), 1]
+      for (let cut = 0; cut < cuts.length - 1; cut += 1) {
+        const start = cuts[cut]
+        const end = cuts[cut + 1]
+        if (end - start < 0.004) {
+          continue
+        }
+        const dotted = spans.some(
+          (span) => start >= span.enter - 0.002 && end <= span.leave + 0.002,
+        )
+        push(dotted, lerp(from, to, start), lerp(from, to, end))
+      }
+    }
+    return runs.length ? runs : [{ points, dotted: false }]
   }
 
   private queueCrossingRefresh(flow: Element) {
