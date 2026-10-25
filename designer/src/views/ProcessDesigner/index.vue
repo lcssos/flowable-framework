@@ -474,13 +474,23 @@ defineExpose({
         ></BpmnPanel>
       </el-aside>
     </el-container>
-    <el-dialog v-model="loginVisible" :title="$t('ui.login')" width="360px" :close-on-click-modal="false">
+    <el-dialog
+      v-model="loginVisible"
+      :title="$t('ui.login')"
+      width="360px"
+      :close-on-click-modal="false"
+    >
       <el-form @submit.prevent="submitLogin">
         <el-form-item :label="$t('ui.username')">
           <el-input v-model="loginUsername" />
         </el-form-item>
         <el-form-item :label="$t('ui.password')">
-          <el-input v-model="loginPassword" type="password" show-password @keyup.enter="submitLogin" />
+          <el-input
+            v-model="loginPassword"
+            type="password"
+            show-password
+            @keyup.enter="submitLogin"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
