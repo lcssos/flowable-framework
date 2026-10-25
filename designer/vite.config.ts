@@ -1,0 +1,74 @@
+import { fileURLToPath, URL } from 'node:url'
+
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import vueJsx from '@vitejs/plugin-vue-jsx'
+import vueDevTools from 'vite-plugin-vue-devtools'
+import { resolve } from 'path'
+import Components from 'unplugin-vue-components/vite'
+import AutoImport from 'unplugin-auto-import/vite'
+import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+
+// https://vite.dev/config/
+export default defineConfig({
+  base: '/',
+  plugins: [
+    vue(),
+    vueJsx(),
+    createSvgIconsPlugin({
+      iconDirs: [resolve(process.cwd(), 'src/assets/icons')],
+      symbolId: 'icon-[dir]-[name]',
+    }),
+    AutoImport({
+      imports: ['vue', 'vue-router', { '@/languages/uiText': ['translateUi', 'translateUiHtml'] }],
+      resolvers: [ElementPlusResolver()],
+      dts: 'src/typings/auto-imports.d.ts',
+      eslintrc: {
+        enabled: true,
+        filepath: './.eslintrc-auto-import.json',
+      },
+    }),
+    Components({
+      extensions: ['vue', 'tsx', 'md'],
+      globs: ['src/components/*/*.vue', 'src/components/*/*.tsx', 'src/components/*/index.ts'],
+      include: [/\.vue$/, /\.vue\?vue/, /\.md$/, /\.[tj]sx?$/],
+      resolvers: [
+        ElementPlusResolver({
+          importStyle: 'sass',
+        }),
+      ],
+      dts: 'src/typings/components.d.ts',
+    }),
+    vueDevTools(),
+  ],
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
+  css: {
+    preprocessorOptions: {
+      scss: { api: 'modern-compiler' },
+    },
+  },
+  build: {
+    outDir: '../src/main/resources/static',
+    emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
+        sanitizeFileName(name) {
+          const match = /^[a-z]:/i.exec(name)
+          const driveLetter = match ? match[0] : ''
+          return (
+            driveLetter +
+            name.substring(driveLetter.length).replace(/[\x00-\x1F\x7F<>*#"{}|^[\]`;?:&=+$,]/g, '')
+          )
+        },
+      },
+    },
+  },
+})

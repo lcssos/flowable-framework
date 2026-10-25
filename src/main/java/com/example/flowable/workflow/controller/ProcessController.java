@@ -3,10 +3,15 @@ package com.example.flowable.workflow.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.flowable.common.api.ApiResponse;
 import com.example.flowable.identity.service.CurrentUsers;
+import com.example.flowable.workflow.dto.DeployProcessRequest;
+import com.example.flowable.workflow.dto.ProcessDefinitionSummary;
 import com.example.flowable.workflow.dto.ProcessInstanceDetail;
 import com.example.flowable.workflow.dto.ProcessInstanceView;
+import com.example.flowable.workflow.dto.ProcessModelView;
 import com.example.flowable.workflow.service.ProcessCommandService;
+import com.example.flowable.workflow.service.ProcessDefinitionService;
 import com.example.flowable.workflow.service.ProcessQueryService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -23,15 +29,36 @@ public class ProcessController {
 
     private final ProcessCommandService processCommandService;
     private final ProcessQueryService processQueryService;
+    private final ProcessDefinitionService processDefinitionService;
     private final CurrentUsers currentUsers;
 
     public ProcessController(
             ProcessCommandService processCommandService,
             ProcessQueryService processQueryService,
+            ProcessDefinitionService processDefinitionService,
             CurrentUsers currentUsers) {
         this.processCommandService = processCommandService;
         this.processQueryService = processQueryService;
+        this.processDefinitionService = processDefinitionService;
         this.currentUsers = currentUsers;
+    }
+
+    @GetMapping("/process-definitions")
+    public ApiResponse<List<ProcessDefinitionSummary>> listDefinitions() {
+        currentUsers.require();
+        return ApiResponse.ok(processDefinitionService.listLatest());
+    }
+
+    @GetMapping("/process-definitions/{key}/model")
+    public ApiResponse<ProcessModelView> model(@PathVariable("key") String key) {
+        currentUsers.require();
+        return ApiResponse.ok(processDefinitionService.getModel(key));
+    }
+
+    @PostMapping("/process-definitions")
+    public ApiResponse<ProcessDefinitionSummary> deploy(@Valid @RequestBody DeployProcessRequest request) {
+        currentUsers.require();
+        return ApiResponse.ok(processDefinitionService.deploy(request.xml()));
     }
 
     @PostMapping("/process-definitions/{key}/start")
