@@ -169,83 +169,12 @@ const segmentCross = (from: Waypoint, to: Waypoint, otherFrom: Waypoint, otherTo
   return { t, at: { x: from.x + t * rx, y: from.y + t * ry } }
 }
 
-const circleCross = (from: Waypoint, to: Waypoint, center: Waypoint, radius: number) => {
-  const dx = to.x - from.x
-  const dy = to.y - from.y
-  const fx = from.x - center.x
-  const fy = from.y - center.y
-  const a = dx * dx + dy * dy
-  if (a === 0) {
-    return []
-  }
-  const b = 2 * (fx * dx + fy * dy)
-  const c = fx * fx + fy * fy - radius * radius
-  const disc = b * b - 4 * a * c
-  if (disc < 0) {
-    return []
-  }
-  const root = Math.sqrt(disc)
-  return [(-b - root) / (2 * a), (-b + root) / (2 * a)]
-    .filter((t) => t > 0.06 && t < 0.94)
-    .map((t) => ({ t, at: { x: from.x + t * dx, y: from.y + t * dy } }))
-}
-
-const outlineSegments = (element: Shape) => {
-  if (isAny(element, TASK_TYPES)) {
-    const rect = visualRect(element)
-    const corners = [
-      { x: rect.x, y: rect.y },
-      { x: rect.x + rect.width, y: rect.y },
-      { x: rect.x + rect.width, y: rect.y + rect.height },
-      { x: rect.x, y: rect.y + rect.height },
-    ]
-    return [
-      [corners[0], corners[1]],
-      [corners[1], corners[2]],
-      [corners[2], corners[3]],
-      [corners[3], corners[0]],
-    ]
-  }
-  if (is(element, 'bpmn:Gateway')) {
-    const cx = element.x + element.width / 2
-    const cy = element.y + element.height / 2
-    const corners = [
-      { x: cx, y: element.y },
-      { x: element.x + element.width, y: cy },
-      { x: cx, y: element.y + element.height },
-      { x: element.x, y: cy },
-    ]
-    return [
-      [corners[0], corners[1]],
-      [corners[1], corners[2]],
-      [corners[2], corners[3]],
-      [corners[3], corners[0]],
-    ]
-  }
-  return []
-}
-
-const shapeCenter = (element: Shape) => {
-  if (isAny(element, TASK_TYPES)) {
-    const rect = visualRect(element)
-    return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }
-  }
-  return { x: element.x + element.width / 2, y: element.y + element.height / 2 }
-}
-
-const hopNormal = (from: Waypoint, to: Waypoint, awayFrom?: Waypoint, at?: Waypoint) => {
+const hopNormal = (from: Waypoint, to: Waypoint) => {
   const dx = to.x - from.x
   const dy = to.y - from.y
   const len = Math.hypot(dx, dy) || 1
   let nx = -dy / len
   let ny = dx / len
-  if (awayFrom && at) {
-    if (nx * (at.x - awayFrom.x) + ny * (at.y - awayFrom.y) < 0) {
-      nx = -nx
-      ny = -ny
-    }
-    return { nx, ny }
-  }
   if (Math.abs(dx) >= Math.abs(dy) ? ny > 0 : nx < 0) {
     nx = -nx
     ny = -ny
@@ -253,7 +182,7 @@ const hopNormal = (from: Waypoint, to: Waypoint, awayFrom?: Waypoint, at?: Waypo
   return { nx, ny }
 }
 
-const hopPoints = (from: Waypoint, to: Waypoint, at: Waypoint, awayFrom?: Waypoint) => {
+const hopPoints = (from: Waypoint, to: Waypoint, at: Waypoint) => {
   const dx = to.x - from.x
   const dy = to.y - from.y
   const len = Math.hypot(dx, dy) || 1
@@ -265,7 +194,7 @@ const hopPoints = (from: Waypoint, to: Waypoint, at: Waypoint, awayFrom?: Waypoi
   const uy = dy / len
   const start = { x: at.x - ux * HOP, y: at.y - uy * HOP }
   const end = { x: at.x + ux * HOP, y: at.y + uy * HOP }
-  const { nx, ny } = hopNormal(from, to, awayFrom, at)
+  const { nx, ny } = hopNormal(from, to)
   const arc = [start]
   for (let step = 1; step < 6; step += 1) {
     const ratio = step / 6
@@ -278,10 +207,7 @@ const hopPoints = (from: Waypoint, to: Waypoint, at: Waypoint, awayFrom?: Waypoi
   return arc
 }
 
-const weaveHops = (
-  points: Waypoint[],
-  hits: { index: number; t: number; at: Waypoint; awayFrom?: Waypoint }[],
-) => {
+const weaveHops = (points: Waypoint[], hits: { index: number; t: number; at: Waypoint }[]) => {
   const grouped = new Map<number, typeof hits>()
   hits.forEach((hit) => {
     const list = grouped.get(hit.index) || []
@@ -300,7 +226,7 @@ const weaveHops = (
         if ((hit.t - last) * length < HOP * 2.4) {
           return
         }
-        const arc = hopPoints(from, to, hit.at, hit.awayFrom)
+        const arc = hopPoints(from, to, hit.at)
         if (!arc.length) {
           return
         }
@@ -632,46 +558,31 @@ export default class InkRenderer extends BaseRenderer {
     if (points.length < 2 || !is(connection, 'bpmn:SequenceFlow')) {
       return points
     }
-    const hits: { index: number; t: number; at: Waypoint; awayFrom?: Waypoint }[] = []
+    const hits: { index: number; t: number; at: Waypoint }[] = []
     this.registry.forEach((item) => {
       if (!item.parent || isLabel(item) || item === (connection as unknown as Element)) {
         return
       }
-      if ('waypoints' in item && is(item, 'bpmn:SequenceFlow')) {
-        if (String(connection.id) < String(item.id)) {
-          this.queueCrossingRefresh(item)
-          return
-        }
-        const other = dockedWaypoints(item as Connection)
-        for (let index = 0; index < points.length - 1; index += 1) {
-          for (let otherIndex = 0; otherIndex < other.length - 1; otherIndex += 1) {
-            const hit = segmentCross(
-              points[index],
-              points[index + 1],
-              other[otherIndex],
-              other[otherIndex + 1],
-            )
-            if (hit) {
-              hits.push({ index, t: hit.t, at: hit.at })
-            }
+      if (!('waypoints' in item) || !is(item, 'bpmn:SequenceFlow')) {
+        return
+      }
+      if (String(connection.id) < String(item.id)) {
+        this.queueCrossingRefresh(item)
+        return
+      }
+      const other = dockedWaypoints(item as Connection)
+      for (let index = 0; index < points.length - 1; index += 1) {
+        for (let otherIndex = 0; otherIndex < other.length - 1; otherIndex += 1) {
+          const hit = segmentCross(
+            points[index],
+            points[index + 1],
+            other[otherIndex],
+            other[otherIndex + 1],
+          )
+          if (hit) {
+            hits.push({ index, t: hit.t, at: hit.at })
           }
         }
-        return
-      }
-      if (item === connection.source || item === connection.target || !isAny(item, SHAPE_TYPES)) {
-        return
-      }
-      const shape = item as Shape
-      const center = shapeCenter(shape)
-      for (let index = 0; index < points.length - 1; index += 1) {
-        const from = points[index]
-        const to = points[index + 1]
-        const crossings = is(shape, 'bpmn:Event')
-          ? circleCross(from, to, center, Math.min(shape.width, shape.height) / 2)
-          : outlineSegments(shape)
-              .map(([start, end]) => segmentCross(from, to, start, end))
-              .filter((hit): hit is { t: number; at: Waypoint } => Boolean(hit))
-        crossings.forEach((hit) => hits.push({ index, t: hit.t, at: hit.at, awayFrom: center }))
       }
     })
     return weaveHops(points, hits)
