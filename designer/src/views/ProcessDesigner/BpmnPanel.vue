@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { type Component, h, nextTick, ref, shallowRef, type VNode } from 'vue'
+import { type Component, computed, h, nextTick, ref, shallowRef, type VNode } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BpmnModeler from 'bpmn-js/lib/Modeler'
 import type { Element } from 'bpmn-js/lib/model/Types'
 import type ElementRegistry from 'diagram-js/lib/core/ElementRegistry'
@@ -60,7 +61,21 @@ const eventBus = props.modeler.get<EventBus>('eventBus')
 const canvas = props.modeler.get<Canvas>('canvas')
 const injector = props.modeler.get<Injector>('injector')
 const elementRegistry = props.modeler.get<ElementRegistry>('elementRegistry')
+const { t, te } = useI18n()
 const selectedElement = shallowRef<Element>()
+const headingTick = ref(0)
+const elementHeading = computed(() => {
+  void headingTick.value
+  const businessObject = selectedElement.value?.businessObject as
+    | { id?: string; name?: string; $type?: string }
+    | undefined
+  const typeName = businessObject?.$type?.split(':').pop() || ''
+  const typeKey = `types.${typeName}`
+  return {
+    name: businessObject?.name || businessObject?.id || '',
+    type: typeName && te(typeKey) ? t(typeKey) : typeName,
+  }
+})
 const renderComponent = shallowRef<Component>(BaseActivity)
 const renderKey = ref('')
 const renderToken = ref('')
@@ -153,7 +168,7 @@ const onElementsChanged = (e: any) => {
         selectedElement: updatedElement,
         injector,
       })
-      // _update(updatedElement)
+      headingTick.value += 1
     }
   }
 }
@@ -296,7 +311,10 @@ const elementExists = (element: Element, elementRegistry: ElementRegistry) => {
 
 <template>
   <div class="panel-container">
-    <!--size="small" label-position="left" label-width="90px"-->
+    <header v-if="elementHeading.name || elementHeading.type" class="panel-heading">
+      <strong class="panel-heading__name">{{ elementHeading.name }}</strong>
+      <span class="panel-heading__type">{{ elementHeading.type }}</span>
+    </header>
     <el-form v-bind="$attrs" label-width="110px">
       <component :is="renderComponent" :key="renderKey" />
     </el-form>
@@ -304,11 +322,44 @@ const elementExists = (element: Element, elementRegistry: ElementRegistry) => {
 </template>
 <style scoped lang="scss">
 .panel-container {
+  display: flex;
+  flex-direction: column;
   height: 100%;
 }
 
+.panel-heading {
+  display: flex;
+  flex: none;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--el-border-color);
+}
+
+.panel-heading__name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel-heading__type {
+  flex: none;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
 :deep {
-  .el-form,
+  .el-form {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+  }
+
   .el-tabs,
   .el-tab-pane {
     height: 100%;

@@ -14,11 +14,10 @@ import BpmnModeler from 'bpmn-js/lib/Modeler'
 import {
   CaretLeft,
   CaretRight,
+  CircleCheck,
   FolderOpened,
-  Moon,
-  Sunny,
+  MapLocation,
   Upload,
-  VideoPause,
   VideoPlay,
   ZoomIn,
   ZoomOut,
@@ -50,7 +49,7 @@ import {
 defineOptions({
   name: 'ProcessDesigner',
 })
-const { language } = storeToRefs(useAppStore())
+const { language, theme } = storeToRefs(useAppStore())
 const processKeyParam = 'key'
 const { t } = useI18n()
 const props = defineProps<{
@@ -113,23 +112,10 @@ const zoom = customRef<number>((track, trigger) => {
     },
   }
 })
-const isDark = customRef<boolean>((track, trigger) => {
-  return {
-    get() {
-      track()
-      return document.documentElement.classList.contains('dark')
-    },
-    set(newValue: boolean) {
-      if (newValue) {
-        document.documentElement.classList.add('dark')
-      } else {
-        document.documentElement.classList.remove('dark')
-      }
-      trigger()
-    },
-  }
-})
 const rightArrow = ref(true)
+const processName = ref('')
+const processId = ref('')
+const currentProcessKey = ref<string | null>(null)
 const issuesList = ref<ElementIssue[]>([])
 const modeler = ref<BpmnModeler>()
 const injector = ref<Injector>()
@@ -150,14 +136,23 @@ const ensureLogin = async () => {
 const showError = (error: unknown) => {
   ElMessage.error(error instanceof Error ? error.message : String(error))
 }
+const syncProcessIdentity = () => {
+  const root = modeler.value?.get<Canvas>('canvas')?.getRootElement() as
+    | { businessObject?: { id?: string; name?: string } }
+    | undefined
+  processId.value = root?.businessObject?.id || ''
+  processName.value = root?.businessObject?.name || ''
+}
 const importDiagram = async (xml: string) => {
   modeler.value?.get<CommandStack>('commandStack').clear()
   await modeler.value?.importXML(xml)
   modeler.value?.get<Canvas>('canvas')?.zoom('fit-viewport')
+  syncProcessIdentity()
 }
 const processKeyFromUrl = () => {
   return new URLSearchParams(window.location.search).get(processKeyParam) || null
 }
+currentProcessKey.value = processKeyFromUrl()
 const writeProcessKey = (key: string | null) => {
   const url = new URL(window.location.href)
   if (key) {
@@ -167,6 +162,15 @@ const writeProcessKey = (key: string | null) => {
   }
   const next = `${url.pathname}${url.search}${url.hash}`
   window.history.replaceState(window.history.state, '', next)
+  currentProcessKey.value = key
+}
+const setTheme = (value: string | number | object) => {
+  if (value === 'ink' || value === 'classic' || value === 'dark') {
+    theme.value = value
+  }
+}
+const processRowClass = ({ row }: { row: ProcessDefinitionSummary }) => {
+  return row.key === currentProcessKey.value ? 'is-current-process' : ''
 }
 const showNewProcess = async () => {
   const xml = EmptyXML(props.id || nextId('Process_'), props.name || t('ui.newProcess'))
@@ -232,6 +236,9 @@ const openDefinition = async (key: string) => {
     showError(error)
   }
 }
+const openProcessRow = (row: ProcessDefinitionSummary) => {
+  void openDefinition(row.key)
+}
 const save = async () => {
   if (!(await ensureLogin())) {
     return
@@ -281,6 +288,7 @@ const modelerReady = async (bpmnModeler: BpmnModeler) => {
   modeler.value?.on<{ issues: Issues }>('linting.completed', ({ issues }) => {
     issuesList.value = Object.values(issues).flat()
   })
+  modeler.value?.on('commandStack.changed', syncProcessIdentity)
   await restoreOpenedProcess()
   // await bpmnModeler.createDiagram()
 }
@@ -314,25 +322,55 @@ defineExpose({
 <template>
   <el-container class="design-container">
     <el-header class="design-header">
-      <el-text tag="b" :size="'large'">{{ $t('ui.title') }}</el-text>
-      <el-space>
-        <el-switch
-          inline-prompt
-          :active-text="$t('ui.labelPositionTop')"
-          :inactive-text="$t('ui.labelPositionLeft')"
-          active-value="top"
-          inactive-value="left"
-          v-model="labelPosition"
-        />
-        <el-switch
-          inline-prompt
-          :active-text="$t('ui.formSizeDefault')"
-          :inactive-text="$t('ui.formSizeCompact')"
-          active-value="default"
-          inactive-value="small"
-          v-model="formSize"
-        />
-        <el-switch inline-prompt :active-icon="Moon" :inactive-icon="Sunny" v-model="isDark" />
+      <div class="design-brand">
+        <span class="design-brand__name">{{ $t('ui.productName') }}</span>
+        <span class="design-brand__process">{{ processName || $t('ui.newProcess') }}</span>
+        <span v-if="processId" class="design-brand__key">{{ processId }}</span>
+      </div>
+      <div class="design-header__actions">
+        <el-button :icon="FolderOpened" @click="openDefinitions">{{ $t('ui.open') }}</el-button>
+        <el-button class="design-save" :icon="Upload" @click="save">{{ $t('ui.save') }}</el-button>
+        <el-popover trigger="click" :width="240" placement="bottom-end">
+          <template #reference>
+            <el-button>{{ $t('ui.display') }}</el-button>
+          </template>
+          <div class="display-menu">
+            <span>{{ $t('ui.labelPositionLeft') }}</span>
+            <el-switch
+              v-model="labelPosition"
+              inline-prompt
+              :active-text="$t('ui.labelPositionTop')"
+              :inactive-text="$t('ui.labelPositionLeft')"
+              active-value="top"
+              inactive-value="left"
+            />
+            <span>{{ $t('ui.formSizeCompact') }}</span>
+            <el-switch
+              v-model="formSize"
+              inline-prompt
+              :active-text="$t('ui.formSizeDefault')"
+              :inactive-text="$t('ui.formSizeCompact')"
+              active-value="default"
+              inactive-value="small"
+            />
+          </div>
+        </el-popover>
+        <el-dropdown trigger="click" popper-class="theme-menu" @command="setTheme">
+          <el-button>{{ $t('ui.theme') }}</el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="ink" :class="{ 'is-active': theme === 'ink' }">
+                {{ $t('ui.themeInk') }}
+              </el-dropdown-item>
+              <el-dropdown-item command="classic" :class="{ 'is-active': theme === 'classic' }">
+                {{ $t('ui.themeClassic') }}
+              </el-dropdown-item>
+              <el-dropdown-item command="dark" :class="{ 'is-active': theme === 'dark' }">
+                {{ $t('ui.themeDark') }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
         <el-switch
           v-model="language"
           inline-prompt
@@ -342,35 +380,12 @@ defineExpose({
           inactive-value="en-US"
           :aria-label="$t('ui.switchLanguage')"
         />
-        <el-link
-          underline="never"
-          target="_blank"
-          href="https://github.com/tsai996/vue-bpmn-designer"
-        >
-          <Iconify class="el-icon--left" icon="ri:github-fill" width="25px" />
-        </el-link>
-        <el-link
-          underline="never"
-          target="_blank"
-          href="https://gitee.com/cai_xiao_feng/vue-bpmn-designer"
-        >
-          <Iconify class="el-icon--left" icon="ri:gitee-fill" width="25px" />
-        </el-link>
-      </el-space>
+      </div>
     </el-header>
     <el-container style="overflow-y: auto">
       <el-container style="position: relative">
         <el-header class="design-inner__header">
           <el-space :size="10">
-            <el-button-group size="small">
-              <el-tooltip placement="top" :content="$t('ui.open')">
-                <el-button :icon="FolderOpened" @click="openDefinitions" />
-              </el-tooltip>
-              <el-tooltip placement="top" :content="$t('ui.save')">
-                <el-button :icon="Upload" size="small" @click="save" />
-              </el-tooltip>
-            </el-button-group>
-
             <el-button-group size="small">
               <el-tooltip placement="top" :content="$t('ui.undo')">
                 <el-button @click="undo">
@@ -383,53 +398,52 @@ defineExpose({
                 </el-button>
               </el-tooltip>
             </el-button-group>
-
             <el-button-group size="small">
-              <el-tooltip :content="$t('ui.zoomIn')" placement="top-start">
-                <el-button :icon="ZoomIn" @click="zoom += 0.1" :disabled="zoom >= 1.7"></el-button>
+              <el-tooltip :content="$t('ui.zoomOut')" placement="top">
+                <el-button :icon="ZoomOut" @click="zoom -= 0.1" :disabled="zoom <= 0.5" />
               </el-tooltip>
-              <el-tooltip :content="$t('ui.resetZoom')" placement="top-start">
-                <el-button @click="resetZoom"> {{ (zoom * 100).toFixed(0) }}%</el-button>
+              <el-tooltip :content="$t('ui.resetZoom')" placement="top">
+                <el-button @click="resetZoom">{{ (zoom * 100).toFixed(0) }}%</el-button>
               </el-tooltip>
-              <el-tooltip :content="$t('ui.zoomOut')" placement="top-start">
-                <el-button :icon="ZoomOut" @click="zoom -= 0.1" :disabled="zoom <= 0.5"></el-button>
+              <el-tooltip :content="$t('ui.zoomIn')" placement="top">
+                <el-button :icon="ZoomIn" @click="zoom += 0.1" :disabled="zoom >= 1.7" />
               </el-tooltip>
             </el-button-group>
-
             <el-button-group size="small">
-              <!--              <el-tooltip placement="top" :content="$tu('自动布局')">
-                <el-button @click="layout">
-                  <iconify icon="tabler:layout-filled" :size="3" />
-                </el-button>
-              </el-tooltip>-->
               <el-tooltip placement="top" :content="$t('ui.reset')">
                 <el-button @click="restart">
                   <iconify icon="solar:eraser-outline" :size="3" />
                 </el-button>
               </el-tooltip>
-              <el-tooltip placement="top" :content="$t('ui.simulation')">
+              <el-tooltip
+                placement="top"
+                :content="$t(mockVisible ? 'ui.exitSimulation' : 'ui.startSimulation')"
+              >
                 <el-button
-                  :icon="mockVisible ? VideoPause : VideoPlay"
+                  :icon="VideoPlay"
+                  :class="{ 'is-active': mockVisible }"
                   @click="mockVisible = !mockVisible"
-                >
-                  {{ $t(mockVisible ? 'ui.exitSimulation' : 'ui.startSimulation') }}
-                </el-button>
+                />
               </el-tooltip>
-              <el-tooltip placement="top" :content="$t('ui.validation')">
+              <el-tooltip
+                placement="top"
+                :content="$t(lintVisible ? 'ui.disableValidation' : 'ui.enableValidation')"
+              >
                 <el-button
-                  :icon="lintVisible ? VideoPause : VideoPlay"
+                  :icon="CircleCheck"
+                  :class="{ 'is-active': lintVisible }"
                   @click="lintVisible = !lintVisible"
-                >
-                  {{ $t(lintVisible ? 'ui.disableValidation' : 'ui.enableValidation') }}
-                </el-button>
+                />
               </el-tooltip>
-              <el-tooltip placement="top" :content="$t('ui.minimap')">
+              <el-tooltip
+                placement="top"
+                :content="$t(mapVisible ? 'ui.collapseMinimap' : 'ui.expandMinimap')"
+              >
                 <el-button
-                  :icon="mapVisible ? VideoPause : VideoPlay"
+                  :icon="MapLocation"
+                  :class="{ 'is-active': mapVisible }"
                   @click="mapVisible = !mapVisible"
-                >
-                  {{ $t(mapVisible ? 'ui.collapseMinimap' : 'ui.expandMinimap') }}
-                </el-button>
+                />
               </el-tooltip>
             </el-button-group>
           </el-space>
@@ -467,15 +481,15 @@ defineExpose({
       </template>
     </el-dialog>
     <el-dialog v-model="openVisible" :title="$t('ui.openProcess')" width="560px">
-      <el-table :data="definitions" height="320">
+      <el-table
+        :data="definitions"
+        height="320"
+        :row-class-name="processRowClass"
+        @row-click="openProcessRow"
+      >
         <el-table-column prop="key" :label="$t('ui.id')" />
         <el-table-column prop="name" :label="$t('ui.name')" />
         <el-table-column prop="version" :label="$t('ui.version')" width="90" />
-        <el-table-column :label="$t('ui.operation')" width="100">
-          <template #default="{ row }">
-            <el-button link type="primary" @click="openDefinition(row.key)">{{ $t('ui.open') }}</el-button>
-          </template>
-        </el-table-column>
       </el-table>
     </el-dialog>
   </el-container>
@@ -488,53 +502,118 @@ defineExpose({
   right: 0;
   z-index: 3;
   transform: translateY(-50%);
-  background-color: var(--el-bg-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2px;
-  height: 50px;
-  border-radius: 10px 0 0 10px;
+  width: 16px;
+  height: 48px;
+  color: var(--el-text-color-secondary);
+  background-color: var(--el-bg-color);
+  border: 1px solid var(--el-border-color);
+  border-right: none;
+  border-radius: 6px 0 0 6px;
   cursor: pointer;
-  box-shadow: -7px 0px 7px -5px rgba(0, 0, 0, 0.1);
 }
 
 .design-container {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  background: var(--designer-paper, var(--el-bg-color-page));
 
   .design-header {
-    height: 50px;
-    border-bottom: var(--el-border);
+    height: 56px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--el-border-color);
     background-color: var(--el-bg-color);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 20px;
+    gap: 16px;
   }
 
   .design-inner__header {
-    height: 40px;
+    height: 44px;
+    padding: 0 12px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    border-bottom: var(--el-border);
-    // background-color: var(--el-bg-color);
-    // box-shadow: var(--el-box-shadow-light);
+    border-bottom: 1px solid var(--el-border-color);
+    background-color: var(--el-bg-color);
   }
 
   .design-inner__main {
     padding: 0;
     height: 100%;
+    background: var(--designer-canvas, var(--el-bg-color));
   }
 
   .design-aside {
-    box-shadow: var(--el-box-shadow);
-    transition: width 0.3s ease;
+    border-left: 1px solid var(--el-border-color);
+    box-shadow: none;
+    transition: width 0.2s ease;
     background-color: var(--el-bg-color);
-    // z-index: 1;
   }
+}
+
+.design-brand {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+  gap: 10px;
+}
+
+.design-brand__name {
+  flex: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.design-brand__process {
+  overflow: hidden;
+  font-size: 14px;
+  color: var(--el-text-color-regular);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.design-brand__key {
+  flex: none;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.design-header__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.design-save {
+  --el-button-bg-color: var(--designer-save);
+  --el-button-border-color: var(--designer-save);
+  --el-button-hover-bg-color: var(--designer-save-hover);
+  --el-button-hover-border-color: var(--designer-save-hover);
+  --el-button-text-color: #fff;
+  --el-button-hover-text-color: #fff;
+}
+
+.display-menu {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px 16px;
+  align-items: center;
+}
+
+.design-inner__header :deep(.is-active) {
+  color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+}
+
+:deep(.is-current-process) {
+  background: var(--el-color-primary-light-9);
+  cursor: pointer;
 }
 
 .canvas {

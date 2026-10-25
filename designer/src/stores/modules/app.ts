@@ -3,6 +3,18 @@ import { useNavigatorLanguage } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 
 export type LanguageType = 'zh-CN' | 'en-US'
+export type ThemeType = 'ink' | 'classic' | 'dark'
+
+const isTheme = (value: string): value is ThemeType => {
+  return value === 'ink' || value === 'classic' || value === 'dark'
+}
+
+const applyTheme = (value: ThemeType) => {
+  const root = document.documentElement
+  root.dataset.theme = value
+  root.classList.toggle('dark', value === 'dark')
+}
+
 const useAppStore = defineStore(
   'app-store',
   () => {
@@ -11,6 +23,7 @@ const useAppStore = defineStore(
     const language = shallowRef<LanguageType>(
       navigatorLanguage.value?.toLowerCase().startsWith('zh') ? 'zh-CN' : 'en-US',
     )
+    const theme = ref<ThemeType>('ink')
     const changeLanguage = (lang: LanguageType) => {
       language.value = lang
     }
@@ -24,15 +37,28 @@ const useAppStore = defineStore(
         immediate: true,
       },
     )
+    watch(
+      theme,
+      (value) => {
+        const next = isTheme(value) ? value : 'ink'
+        if (next !== value) {
+          theme.value = next
+          return
+        }
+        applyTheme(next)
+      },
+      { immediate: true },
+    )
 
     return {
       language,
       changeLanguage,
+      theme,
     }
   },
   {
     persist: {
-      pick: ['language'],
+      pick: ['language', 'theme'],
     },
   },
 )
