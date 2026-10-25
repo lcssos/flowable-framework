@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { customRef, onMounted, provide, ref } from 'vue'
+import { customRef, onBeforeUnmount, onMounted, provide, ref } from 'vue'
 import 'bpmn-js/dist/assets/diagram-js.css'
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css'
 import 'bpmn-js/dist/assets/bpmn-js.css'
@@ -38,6 +38,7 @@ import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import useAppStore from '@/stores/modules/app.ts'
 import { isTheme, themes } from '@/themes'
+import { bindPaletteTips } from './Palette/paletteTips'
 import {
   deployXml,
   getModel,
@@ -259,6 +260,9 @@ const save = async () => {
 onMounted(() => {
   void ensureLogin()
 })
+onBeforeUnmount(() => {
+  unbindPaletteTips?.()
+})
 const redo = () => {
   modeler.value?.get<CommandStack>('commandStack').redo()
 }
@@ -283,7 +287,10 @@ const getXml = async () => {
   const res = await modeler.value?.saveXML({ format: true, preamble: true })
   return res?.xml
 }
+let unbindPaletteTips: (() => void) | undefined
 const modelerReady = async (bpmnModeler: BpmnModeler) => {
+  unbindPaletteTips?.()
+  unbindPaletteTips = bindPaletteTips(bpmnModeler)
   modeler.value = bpmnModeler
   injector.value = bpmnModeler.get<Injector>('injector')
   modeler.value?.on<{ issues: Issues }>('linting.completed', ({ issues }) => {

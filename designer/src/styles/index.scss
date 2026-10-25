@@ -116,6 +116,26 @@ th.el-table__cell {
   bottom: 20px;
 }
 
+.palette-tip {
+  position: fixed;
+  z-index: 20;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--el-text-color-primary);
+  color: var(--el-bg-color);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity 0.12s ease;
+}
+
+.palette-tip.is-visible {
+  opacity: 1;
+}
+
 .djs-parent {
   --bjsl-fill-color: #fff;
   --bjsl-stroke-color: #000;

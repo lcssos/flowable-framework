@@ -5,6 +5,7 @@ import App from './App.vue'
 import '@/styles/index.scss'
 import 'virtual:svg-icons-register'
 import 'element-plus/theme-chalk/dark/css-vars.css'
+import 'element-plus/es/components/message/style/index'
 import { Icon } from '@iconify/vue'
 import { translateUi } from '@/languages/uiText'
 
