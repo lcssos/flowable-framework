@@ -112,6 +112,12 @@ th.el-table__cell {
   }
 }
 
+// 节点栏贴在画布左下，覆盖 bpmn-js 默认的顶部定位
+.bjs-container .djs-palette {
+  top: auto;
+  bottom: 20px;
+}
+
 .djs-parent {
   --bjsl-fill-color: #fff;
   --bjsl-stroke-color: #000;
