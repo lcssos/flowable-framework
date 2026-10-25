@@ -38,7 +38,12 @@ import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import useAppStore from '@/stores/modules/app.ts'
 import { isTheme, themes } from '@/themes'
-import { bindPaletteTips } from './Palette/paletteTips'
+import {
+  bindPaletteTips,
+  refreshPaletteTips,
+  type PaletteEntriesSource,
+} from './Palette/paletteTips'
+import { customTranslate } from './Translate'
 import {
   deployXml,
   getModel,
@@ -53,7 +58,7 @@ defineOptions({
 })
 const { language, theme } = storeToRefs(useAppStore())
 const processKeyParam = 'key'
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const props = defineProps<{
   id?: string
   name?: string
@@ -300,6 +305,33 @@ const modelerReady = async (bpmnModeler: BpmnModeler) => {
   await restoreOpenedProcess()
   // await bpmnModeler.createDiagram()
 }
+// bpmn-js 的界面文案在渲染时一次性翻译：palette 提示缓存在 dataset 上，
+// 底部校验按钮及其内容由 bpmn-js-bpmnlint 生成，切换语言后都需要主动刷新
+const refreshBpmnText = () => {
+  const currentInjector = injector.value
+  if (!currentInjector) {
+    return
+  }
+
+  const paletteProvider = currentInjector.get<PaletteEntriesSource>('paletteProvider', false)
+  if (paletteProvider) {
+    refreshPaletteTips(paletteProvider)
+  }
+
+  currentInjector.get<Linting>('linting', false)?.update()
+
+  // update() 只重算校验结果与按钮文案，不会重建按钮，title 仍是初始语言
+  const lintButton = document.querySelector<HTMLButtonElement>('.bjs-container .bjsl-button')
+  if (lintButton) {
+    lintButton.title = customTranslate('Toggle linting overlays')
+  }
+}
+
+// 监听实际生效的语言，而不是开关状态，避免与 store 里同步 locale 的 watch 抢顺序
+watch(locale, () => {
+  refreshBpmnText()
+})
+
 const validate = async () => {
   const errors = issuesList.value.filter((issue) => issue.category === 'error')
   if (errors.length) {

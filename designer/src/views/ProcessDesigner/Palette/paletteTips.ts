@@ -1,10 +1,33 @@
 // 浏览器原生 title 要停很久才出现，工具栏改成短延迟提示。
 
+import type {
+  PaletteEntries,
+  PaletteEntriesCallback,
+} from 'diagram-js/lib/features/palette/PaletteProvider'
+
 const TIP_DELAY = 120
 
 type Bus = {
   on: (event: string, handler: () => void) => void
   off: (event: string, handler: () => void) => void
+}
+
+export type PaletteEntriesSource = {
+  getPaletteEntries: () => PaletteEntries | PaletteEntriesCallback
+}
+
+// 语言切换后 bpmn-js 不会重建 palette 条目，提示文案缓存在 dataset 上，
+// 这里按 provider 当前语言重新生成一次
+export const refreshPaletteTips = (provider: PaletteEntriesSource) => {
+  const provided = provider.getPaletteEntries()
+  const entries = typeof provided === 'function' ? provided({}) : provided
+
+  document.querySelectorAll<HTMLElement>('.djs-palette .entry[data-action]').forEach((entry) => {
+    const title = entries[entry.dataset.action || '']?.title
+    if (title) {
+      entry.dataset.tip = title
+    }
+  })
 }
 
 export const bindPaletteTips = (eventBus: Bus) => {

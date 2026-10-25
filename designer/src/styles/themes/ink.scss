@@ -38,6 +38,13 @@ html[data-theme='ink'] .djs-parent {
   --popup-entry-hover-color: rgba(31, 75, 110, 0.08);
   --context-pad-entry-background-color: transparent;
   --context-pad-entry-hover-background-color: rgba(31, 75, 110, 0.08);
+  --context-pad-background-color: #ffffff;
+  --context-pad-border-color: rgba(27, 40, 56, 0.08);
+  --context-pad-shadow:
+    0 10px 28px rgba(27, 40, 56, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+  --context-pad-divider-color: rgba(27, 40, 56, 0.12);
+  --context-pad-entry-color: #24384c;
   --bjsl-fill-color: #f7f8fa;
   --bjsl-stroke-color: #31475c;
 }

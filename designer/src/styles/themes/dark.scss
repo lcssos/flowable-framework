@@ -36,8 +36,13 @@ html.dark {
   .djs-parent {
     --bjsl-fill-color: var(--el-fill-color);
     --bjsl-stroke-color: var(--el-text-color-regular);
-    --context-pad-entry-background-color: #373739;
+    --context-pad-entry-background-color: transparent;
     --context-pad-entry-hover-background-color: var(--el-bg-color);
+    --context-pad-background-color: var(--el-bg-color-overlay);
+    --context-pad-border-color: var(--el-border-color);
+    --context-pad-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    --context-pad-divider-color: var(--el-border-color);
+    --context-pad-entry-color: var(--el-text-color-regular);
     --popup-search-border-color: var(--el-border-color);
     --popup-search-focus-background-color: var(--el-fill-color-blank);
     --popup-background-color: var(--el-fill-color);

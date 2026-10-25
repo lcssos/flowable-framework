@@ -22,3 +22,14 @@ html[data-theme='classic'] {
   --designer-save: #409eff;
   --designer-save-hover: #337ecc;
 }
+
+// bpmn-js 画布浮层变量：经典主题用纯白卡片 + 中性灰描边
+html[data-theme='classic'] .djs-parent {
+  --context-pad-background-color: #ffffff;
+  --context-pad-border-color: var(--el-border-color-light);
+  --context-pad-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  --context-pad-divider-color: var(--el-border-color-light);
+  --context-pad-entry-color: var(--el-text-color-primary);
+  --context-pad-entry-background-color: transparent;
+  --context-pad-entry-hover-background-color: var(--el-color-primary-light-9);
+}

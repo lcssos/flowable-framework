@@ -116,6 +116,74 @@ th.el-table__cell {
   bottom: 20px;
 }
 
+// 选中节点/连线后的操作按钮组：用自适应 flex 取代默认固定 72px 三列网格，
+// 条目缺失时后续按钮自动前移，并整体呈现为浮层卡片与流程线等画布元素隔离
+.bjs-container .djs-context-pad {
+  box-sizing: border-box;
+  display: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 4px;
+  line-height: 1;
+  z-index: 150;
+  border: 1px solid var(--context-pad-border-color);
+  border-radius: 10px;
+  background: var(--context-pad-background-color);
+  box-shadow: var(--context-pad-shadow);
+  backdrop-filter: blur(12px);
+}
+
+.bjs-container .djs-context-pad.open {
+  display: flex;
+}
+
+.bjs-container .djs-context-pad .group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+}
+
+// 语义分组之间用竖分隔线分隔，不再靠换行留白
+.bjs-container .djs-context-pad .group + .group {
+  position: relative;
+  margin-left: 4px;
+  padding-left: 8px;
+}
+
+.bjs-container .djs-context-pad .group + .group::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 1px;
+  height: 16px;
+  background: var(--context-pad-divider-color);
+  transform: translateY(-50%);
+}
+
+.bjs-container .djs-context-pad .entry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin: 0;
+  font-size: 20px;
+  color: var(--context-pad-entry-color);
+  border-radius: 6px;
+  background-color: var(--context-pad-entry-background-color);
+  box-shadow: none;
+  transition: background-color 0.12s ease;
+}
+
+.bjs-container .djs-context-pad .entry:hover {
+  background: var(--context-pad-entry-hover-background-color);
+}
+
 .palette-tip {
   position: fixed;
   z-index: 20;
@@ -139,6 +207,13 @@ th.el-table__cell {
 .djs-parent {
   --bjsl-fill-color: #fff;
   --bjsl-stroke-color: #000;
+  --context-pad-background-color: var(--el-bg-color-overlay, #fff);
+  --context-pad-border-color: var(--el-border-color-light, #e4eaf0);
+  --context-pad-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --context-pad-divider-color: var(--el-border-color, #dcdfe6);
+  --context-pad-entry-color: var(--el-text-color-primary, #303133);
+  --context-pad-entry-background-color: transparent;
+  --context-pad-entry-hover-background-color: var(--el-color-primary-light-9, #ecf5ff);
   --palette-border-color: var(--el-border-color);
   --bjsl-color-info: var(--el-color-primary);
   --bjsl-color-warning: var(--el-color-warning);
