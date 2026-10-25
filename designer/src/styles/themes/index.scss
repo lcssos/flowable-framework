@@ -1,4 +1,4 @@
-// 每个主题单独一个文件。新增主题时在这里 @use，并在 src/themes.ts 登记。
-@use 'ink';
+// 纯样式主题在此集中引入。ink / amber / colorful 自成主题包（src/theme/<id>），
+// 由各自 index.ts 引入样式，新增主题时这里 @use 并在 src/themes.ts 登记。
 @use 'classic';
 @use 'dark';

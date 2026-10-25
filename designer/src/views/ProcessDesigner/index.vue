@@ -368,11 +368,16 @@ defineExpose({
         <span v-if="processId" class="design-brand__key">{{ processId }}</span>
       </div>
       <div class="design-header__actions">
-        <el-button :icon="FolderOpened" @click="openDefinitions">{{ $t('ui.open') }}</el-button>
+        <el-button
+          class="design-action design-action--open"
+          :icon="FolderOpened"
+          @click="openDefinitions"
+          >{{ $t('ui.open') }}</el-button
+        >
         <el-button class="design-save" :icon="Upload" @click="save">{{ $t('ui.save') }}</el-button>
         <el-popover trigger="click" :width="240" placement="bottom-end">
           <template #reference>
-            <el-button>{{ $t('ui.display') }}</el-button>
+            <el-button class="design-action design-action--display">{{ $t('ui.display') }}</el-button>
           </template>
           <div class="display-menu">
             <span>{{ $t('ui.labelPositionLeft') }}</span>
@@ -396,7 +401,7 @@ defineExpose({
           </div>
         </el-popover>
         <el-dropdown trigger="click" popper-class="theme-menu" @command="setTheme">
-          <el-button>{{ $t('ui.theme') }}</el-button>
+          <el-button class="design-action design-action--theme">{{ $t('ui.theme') }}</el-button>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item
@@ -427,30 +432,42 @@ defineExpose({
           <el-space :size="10">
             <el-button-group size="small">
               <el-tooltip placement="top" :content="$t('ui.undo')">
-                <el-button @click="undo">
+                <el-button class="design-tool design-tool--undo" @click="undo">
                   <iconify icon="ic:baseline-undo" :size="3" />
                 </el-button>
               </el-tooltip>
               <el-tooltip placement="top" :content="$t('ui.redo')">
-                <el-button @click="redo">
+                <el-button class="design-tool design-tool--redo" @click="redo">
                   <iconify icon="ic:baseline-redo" :size="3" />
                 </el-button>
               </el-tooltip>
             </el-button-group>
             <el-button-group size="small">
               <el-tooltip :content="$t('ui.zoomOut')" placement="top">
-                <el-button :icon="ZoomOut" @click="zoom -= 0.1" :disabled="zoom <= 0.5" />
+                <el-button
+                  class="design-tool design-tool--zoom-out"
+                  :icon="ZoomOut"
+                  @click="zoom -= 0.1"
+                  :disabled="zoom <= 0.5"
+                />
               </el-tooltip>
               <el-tooltip :content="$t('ui.resetZoom')" placement="top">
-                <el-button @click="resetZoom">{{ (zoom * 100).toFixed(0) }}%</el-button>
+                <el-button class="design-tool design-tool--zoom-reset" @click="resetZoom"
+                  >{{ (zoom * 100).toFixed(0) }}%</el-button
+                >
               </el-tooltip>
               <el-tooltip :content="$t('ui.zoomIn')" placement="top">
-                <el-button :icon="ZoomIn" @click="zoom += 0.1" :disabled="zoom >= 1.7" />
+                <el-button
+                  class="design-tool design-tool--zoom-in"
+                  :icon="ZoomIn"
+                  @click="zoom += 0.1"
+                  :disabled="zoom >= 1.7"
+                />
               </el-tooltip>
             </el-button-group>
             <el-button-group size="small">
               <el-tooltip placement="top" :content="$t('ui.reset')">
-                <el-button @click="restart">
+                <el-button class="design-tool design-tool--reset" @click="restart">
                   <iconify icon="solar:eraser-outline" :size="3" />
                 </el-button>
               </el-tooltip>
@@ -459,6 +476,7 @@ defineExpose({
                 :content="$t(mockVisible ? 'ui.exitSimulation' : 'ui.startSimulation')"
               >
                 <el-button
+                  class="design-tool design-tool--simulate"
                   :icon="VideoPlay"
                   :class="{ 'is-active': mockVisible }"
                   @click="mockVisible = !mockVisible"
@@ -469,6 +487,7 @@ defineExpose({
                 :content="$t(lintVisible ? 'ui.disableValidation' : 'ui.enableValidation')"
               >
                 <el-button
+                  class="design-tool design-tool--lint"
                   :icon="CircleCheck"
                   :class="{ 'is-active': lintVisible }"
                   @click="lintVisible = !lintVisible"
@@ -479,6 +498,7 @@ defineExpose({
                 :content="$t(mapVisible ? 'ui.collapseMinimap' : 'ui.expandMinimap')"
               >
                 <el-button
+                  class="design-tool design-tool--map"
                   :icon="MapLocation"
                   :class="{ 'is-active': mapVisible }"
                   @click="mapVisible = !mapVisible"

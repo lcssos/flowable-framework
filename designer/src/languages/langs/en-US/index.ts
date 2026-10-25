@@ -9,6 +9,7 @@ export default {
       classic: 'Classic',
       dark: 'Dark',
       amber: 'Amber',
+      colorful: 'Colorful',
     },
     labelPositionTop: 'Top labels',
     labelPositionLeft: 'Left labels',

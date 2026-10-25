@@ -1,0 +1,208 @@
+// 多彩主题：底色压到最低饱和，把色相全部让给节点与按钮；
+// 每个节点类型、每个按钮各占用一个色相，互不重复。
+@mixin tint-button($color) {
+  --el-button-text-color: #{$color};
+  --el-button-bg-color: color-mix(in srgb, #{$color} 9%, #ffffff);
+  --el-button-border-color: color-mix(in srgb, #{$color} 28%, #ffffff);
+  --el-button-hover-text-color: color-mix(in srgb, #{$color} 82%, #000000);
+  --el-button-hover-bg-color: color-mix(in srgb, #{$color} 16%, #ffffff);
+  --el-button-hover-border-color: color-mix(in srgb, #{$color} 40%, #ffffff);
+}
+
+html[data-theme='colorful'] {
+  --el-color-primary: #5563e8;
+  --el-color-primary-light-3: #838cee;
+  --el-color-primary-light-5: #a4aaf3;
+  --el-color-primary-light-7: #c6caf8;
+  --el-color-primary-light-8: #d7dafb;
+  --el-color-primary-light-9: #edeefd;
+  --el-color-primary-dark-2: #434fc4;
+  --el-border-radius-base: 6px;
+  --el-bg-color: #ffffff;
+  --el-bg-color-page: #f1f3fa;
+  --el-bg-color-overlay: #ffffff;
+  --el-text-color-primary: #1f2937;
+  --el-text-color-regular: #3c4759;
+  --el-text-color-secondary: #6b7688;
+  --el-border-color: #d9deec;
+  --el-border-color-light: #e6e9f4;
+  --el-fill-color-blank: #ffffff;
+  --el-fill-color-light: #f3f5fb;
+  --el-fill-color-lighter: #f8f9fd;
+  --designer-paper: #eceffa;
+  --designer-canvas: #fbfcff;
+  --designer-chrome: #eef1fa;
+  --designer-chrome-fill: linear-gradient(180deg, #ffffff 0%, #eef1fa 100%);
+  --designer-panel: #e9edf9;
+  --designer-panel-fill: linear-gradient(180deg, #f7f9ff 0%, #e9edf9 180px);
+  --designer-save: #1f9d63;
+  --designer-save-hover: #177f50;
+}
+
+html[data-theme='colorful'] .djs-parent {
+  --palette-background-color: rgba(255, 255, 255, 0.78);
+  --palette-border-color: rgba(31, 41, 55, 0.08);
+  --palette-entry-color: #4a5875;
+  --palette-entry-hover-color: #5563e8;
+  --popup-background-color: rgba(255, 255, 255, 0.95);
+  --popup-border-color: rgba(31, 41, 55, 0.08);
+  --popup-entry-hover-color: rgba(85, 99, 232, 0.1);
+  --context-pad-entry-background-color: transparent;
+  --context-pad-entry-hover-background-color: transparent;
+  --context-pad-background-color: #ffffff;
+  --context-pad-border-color: rgba(31, 41, 55, 0.08);
+  --context-pad-shadow:
+    0 10px 28px rgba(31, 41, 55, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+  --context-pad-divider-color: rgba(31, 41, 55, 0.12);
+  --context-pad-entry-color: #4a5875;
+  --bjsl-fill-color: #fbfcff;
+  --bjsl-stroke-color: #3c4759;
+}
+
+html[data-theme='colorful'] .design-header,
+html[data-theme='colorful'] .design-inner__header {
+  background: linear-gradient(180deg, #ffffff 0%, var(--designer-chrome) 100%);
+  border-bottom-color: rgba(31, 41, 55, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+html[data-theme='colorful'] .design-aside {
+  background: linear-gradient(180deg, #f8faff 0%, var(--designer-panel) 140px);
+  border-left-color: rgba(31, 41, 55, 0.08);
+}
+
+html[data-theme='colorful'] .design-aside .panel-heading {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0));
+  border-bottom-color: rgba(31, 41, 55, 0.08);
+}
+
+html[data-theme='colorful'] .design-aside .el-tabs__header,
+html[data-theme='colorful'] .design-aside .el-collapse,
+html[data-theme='colorful'] .design-aside .el-collapse-item__header,
+html[data-theme='colorful'] .design-aside .el-collapse-item__wrap {
+  background: transparent;
+  border-color: transparent;
+}
+
+html[data-theme='colorful'] .design-aside .el-input__wrapper,
+html[data-theme='colorful'] .design-aside .el-select__wrapper,
+html[data-theme='colorful'] .design-aside .el-textarea__inner {
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgba(85, 99, 232, 0.14);
+}
+
+html[data-theme='colorful'] .bjs-container .djs-palette {
+  border-radius: 14px;
+  box-shadow:
+    0 10px 28px rgba(31, 41, 55, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+  backdrop-filter: blur(16px);
+}
+
+// 顶部主操作按钮：打开、保存（.design-save 用 --designer-save）、显示、主题各一色。
+html[data-theme='colorful'] .design-header .design-action--open {
+  @include tint-button(#4f5bd5);
+}
+
+html[data-theme='colorful'] .design-header .design-action--display {
+  @include tint-button(#b5730d);
+}
+
+html[data-theme='colorful'] .design-header .design-action--theme {
+  @include tint-button(#c1367f);
+}
+
+// 画布上方工具栏：九个按钮九种色相。
+$tool-colors: (
+  undo: #4f5bd5,
+  redo: #7a52c7,
+  zoom-out: #2e8fa8,
+  zoom-reset: #2f7d4f,
+  zoom-in: #3b7bbf,
+  reset: #b5493f,
+  simulate: #c4761f,
+  lint: #2a8c7e,
+  map: #8a46b0,
+);
+
+@each $name, $color in $tool-colors {
+  html[data-theme='colorful'] .design-inner__header .design-tool--#{$name} {
+    @include tint-button($color);
+  }
+
+  html[data-theme='colorful'] .design-inner__header .design-tool--#{$name}.is-active {
+    color: #{$color};
+    border-color: color-mix(in srgb, #{$color} 44%, #ffffff);
+    background: color-mix(in srgb, #{$color} 20%, #ffffff);
+  }
+}
+
+// 节点栏（palette）条目：颜色与对应节点保持一致，方便按色找图标。
+$palette-colors: (
+  'hand-tool': #4a5875,
+  'lasso-tool': #6b7688,
+  'space-tool': #7c6a9a,
+  'global-connect-tool': #5563e8,
+  'create.task': #2c6fa6,
+  'create.service-task': #21897a,
+  'create.start-event': #2f8a57,
+  'create.intermediate-event': #2b7e91,
+  'create.end-event': #c0453d,
+  'create.exclusive-gateway': #b78a14,
+  'create.subprocess-expanded': #6a4ebd,
+  'create.participant-expanded': #3f6e93,
+);
+
+@each $action, $color in $palette-colors {
+  html[data-theme='colorful'] .djs-parent .djs-palette .entry[data-action='#{$action}'] {
+    color: #{$color};
+  }
+}
+
+html[data-theme='colorful'] .djs-parent .djs-palette .entry:hover {
+  background-color: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+// 选中节点后的操作菜单：每个动作一个色相。
+$context-pad-colors: (
+  'append.append-task': #2c6fa6,
+  'append.compensation-activity': #8a46b0,
+  'append.condition-intermediate-event': #2a8e9a,
+  'append.message-intermediate-event': #2f72c4,
+  'append.signal-intermediate-event': #7752c0,
+  'append.timer-intermediate-event': #bf8a12,
+  'append.intermediate-event': #2b7e91,
+  'append.end-event': #c0453d,
+  'append.gateway': #b78a14,
+  'append.receive-task': #6a9629,
+  'append.text-annotation': #6b7688,
+  connect: #5563e8,
+  delete: #b5493f,
+  replace: #7a52c7,
+  'lane-insert-above': #3f6e93,
+  'lane-insert-below': #4c851f,
+  'lane-divide-two': #8a6a2e,
+  'lane-divide-three': #a63a55,
+);
+
+@each $action, $color in $context-pad-colors {
+  html[data-theme='colorful'] .djs-parent .djs-context-pad .entry[data-action='#{$action}'] {
+    color: #{$color};
+  }
+}
+
+html[data-theme='colorful'] .djs-parent .djs-context-pad .entry:hover {
+  background-color: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+// 底部校验开关：并入色相体系，避免成为唯一的灰色按钮。
+html[data-theme='colorful'] .bjs-container .bjsl-button {
+  color: #6a4ebd;
+  border-color: color-mix(in srgb, #6a4ebd 30%, #ffffff);
+  background: color-mix(in srgb, #6a4ebd 10%, #ffffff);
+}
+
+html[data-theme='colorful'] .bjs-container .bjsl-button:hover {
+  background: color-mix(in srgb, #6a4ebd 18%, #ffffff);
+}

@@ -1,6 +1,11 @@
-// 暖色主题（琥珀）：沿用墨蓝主题的图形语言，仅替换为暖色调色板。
-// 键名与 ink/tokens.ts 的 INK 保持一致，绘制时整体替换使用。
-export const AMBER = {
+// 暖色主题（琥珀）：图形语言与公共渲染器一致，这里只描述暖砂／陶土配色。
+import type { ThemePalette } from '@/theme/shared/palette'
+
+export const AMBER_ID = 'amber'
+
+export const isAmberTheme = () => document.documentElement.dataset.theme === AMBER_ID
+
+export const AMBER: ThemePalette = {
   stroke: '#8A4A2B',
   text: '#2E241D',
   ink: '#2E241D',
@@ -14,7 +19,3 @@ export const AMBER = {
   userIcon: '#8B5636',
   serviceIcon: '#6E6A38',
 }
-
-export const AMBER_ID = 'amber'
-
-export const isAmberTheme = () => document.documentElement.dataset.theme === AMBER_ID

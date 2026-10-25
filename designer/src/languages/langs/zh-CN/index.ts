@@ -9,6 +9,7 @@ export default {
       classic: '经典',
       dark: '暗色',
       amber: '琥珀',
+      colorful: '多彩',
     },
     labelPositionTop: '顶部标签',
     labelPositionLeft: '左侧标签',

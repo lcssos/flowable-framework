@@ -1,3 +1,5 @@
+// 主题公共渲染器：负责卡片化节点、连线和图标的绘制，自身不持有任何主题配色。
+// 各主题通过 themeId 决定接管范围，并在绘制期间用 withPalette 注入自己的配色。
 import BaseRenderer from 'diagram-js/lib/draw/BaseRenderer'
 import type EventBus from 'diagram-js/lib/core/EventBus'
 import { createLine, componentsToPath } from 'diagram-js/lib/util/RenderUtil'
@@ -12,25 +14,25 @@ import {
   getRoundRectPath,
   getStrokeColor,
 } from 'bpmn-js/lib/draw/BpmnRenderUtil'
-import { CARD_HEIGHT, CARD_RADIUS, INK, TASK_WIDTH, cardBox, isInkTheme } from '../ink/tokens'
-import { installInkIcons } from '../ink/icons'
+import { CARD_HEIGHT, CARD_RADIUS, TASK_WIDTH, cardBox } from './card'
+import { PALETTE } from './palette'
 
 const TASK_TYPES = ['bpmn:Task', 'bpmn:CallActivity']
 const SHAPE_TYPES = [...TASK_TYPES, 'bpmn:Gateway', 'bpmn:Event']
 const FLOW_TYPES = ['bpmn:SequenceFlow', 'bpmn:MessageFlow']
 
-type TextRendererLike = {
+export type TextRendererLike = {
   createText: (text: string, options: Record<string, unknown>) => SVGElement
   getDefaultStyle: () => Record<string, string | number>
 }
-type RegistryLike = {
+export type RegistryLike = {
   forEach: (fn: (element: Element) => void) => void
   getGraphics: (element: Element) => SVGElement | undefined
 }
-type FactoryLike = {
+export type FactoryLike = {
   update: (type: 'shape' | 'connection', element: unknown, gfx: SVGElement) => void
 }
-type ElementFactoryLike = {
+export type ElementFactoryLike = {
   getDefaultSize: (semantic: unknown, di?: unknown) => { width: number; height: number }
 }
 
@@ -43,7 +45,7 @@ const definitionType = (element: Element) => {
   return definitions?.[0]?.$type
 }
 
-const hasConnectorIcon = (element: Element) => {
+export const hasConnectorIcon = (element: Element) => {
   if (!isAny(element, ['bpmn:Task', 'bpmn:Event'])) {
     return false
   }
@@ -56,22 +58,22 @@ const hasConnectorIcon = (element: Element) => {
 
 const taskFill = (element: Element) => {
   if (is(element, 'bpmn:UserTask')) {
-    return INK.userFill
+    return PALETTE.userFill
   }
   if (is(element, 'bpmn:ServiceTask')) {
-    return INK.serviceFill
+    return PALETTE.serviceFill
   }
-  return INK.taskFill
+  return PALETTE.taskFill
 }
 
 const eventFill = (element: Element) => {
   if (is(element, 'bpmn:EndEvent')) {
-    return INK.endFill
+    return PALETTE.endFill
   }
   if (is(element, 'bpmn:StartEvent')) {
-    return INK.startFill
+    return PALETTE.startFill
   }
-  return INK.taskFill
+  return PALETTE.taskFill
 }
 
 const isCard = (element?: unknown) => Boolean(element && isAny(element as Element, TASK_TYPES))
@@ -362,7 +364,6 @@ const circleSpan = (from: Waypoint, to: Waypoint, center: Waypoint, radius: numb
   const fx = from.x - center.x
   const fy = from.y - center.y
   const b = 2 * (fx * dx + fy * dy)
-  const c = fx * fx + fy * fy - radius * radius
   const disc = b * b - 4 * length
   const marks: number[] = []
   if (contains(from)) {
@@ -467,7 +468,7 @@ const materialPaint = (parent: SVGElement, id: string, base: string) => {
   ;[
     ['0%', mixHex(base, '#FFFFFF', 0.7)],
     ['46%', mixHex(base, '#FFFFFF', 0.22)],
-    ['100%', mixHex(base, INK.ink, 0.12)],
+    ['100%', mixHex(base, PALETTE.ink, 0.12)],
   ].forEach(([offset, color]) => {
     svgAppend(gradient, svgCreate('stop', { offset, 'stop-color': color }))
   })
@@ -475,7 +476,7 @@ const materialPaint = (parent: SVGElement, id: string, base: string) => {
   return `url(#${id})`
 }
 
-const softEdge = (base: string) => (base.startsWith('#') ? mixHex(base, INK.ink, 0.34) : base)
+const softEdge = (base: string) => (base.startsWith('#') ? mixHex(base, PALETTE.ink, 0.34) : base)
 
 const drawPerson = (parent: SVGElement, x: number, y: number, color: string) => {
   const glyph = svgCreate('g')
@@ -566,7 +567,7 @@ const drawSymbol = (parent: SVGElement, kind: string, cx: number, cy: number, co
 }
 
 const addMarker = (parent: SVGElement, element: SVGElement, refX: number, refY: number) => {
-  const id = `ink-marker-${markerSeq++}`
+  const id = `theme-marker-${markerSeq++}`
   const marker = svgCreate('marker', {
     id,
     viewBox: '0 0 20 20',
@@ -631,8 +632,11 @@ const slashMarker = (parent: SVGElement, color: string) => {
   return addMarker(parent, slash, 0, 10)
 }
 
-export default class InkRenderer extends BaseRenderer {
+export default abstract class ThemeRenderer extends BaseRenderer {
   static $inject = ['eventBus', 'textRenderer', 'elementRegistry', 'graphicsFactory']
+
+  // 由各主题声明自己的 id，决定该渲染器在哪个主题下接管绘制。
+  protected abstract readonly themeId: string
 
   private readonly textRenderer: TextRendererLike
   private readonly registry: RegistryLike
@@ -649,7 +653,6 @@ export default class InkRenderer extends BaseRenderer {
     this.textRenderer = textRenderer
     this.registry = elementRegistry
     this.graphics = graphicsFactory
-    installInkIcons()
     // 穿过节点的圆点取决于节点位置。节点移动不会改顺序流的航点，需要主动重画。
     eventBus.on('element.changed', (event: { element?: Element }) => {
       const moved = event.element
@@ -691,7 +694,10 @@ export default class InkRenderer extends BaseRenderer {
   }
 
   canRender(element: Element) {
-    if (!isInkTheme() || isLabel(element) || hasConnectorIcon(element)) {
+    if (document.documentElement.dataset.theme !== this.themeId) {
+      return false
+    }
+    if (isLabel(element) || hasConnectorIcon(element)) {
       return false
     }
     return isAny(element, [...SHAPE_TYPES, ...FLOW_TYPES])
@@ -709,7 +715,7 @@ export default class InkRenderer extends BaseRenderer {
 
   drawConnection(parent: SVGElement, element: Connection) {
     const points = this.withPassArcs(element, dockedWaypoints(element))
-    const color = getStrokeColor(element, INK.stroke)
+    const color = getStrokeColor(element, PALETTE.stroke)
     const message = is(element, 'bpmn:MessageFlow')
     const runs = message
       ? [{ points, dotted: false }]
@@ -885,7 +891,7 @@ export default class InkRenderer extends BaseRenderer {
   private drawTask(parent: SVGElement, element: Shape) {
     const box = cardBox(element.height)
     const base = getFillColor(element, taskFill(element))
-    const fill = materialPaint(parent, `ink-task-${element.id}`, base)
+    const fill = materialPaint(parent, `theme-task-${element.id}`, base)
     const edge = getStrokeColor(element, softEdge(base))
     const radius = Math.min(CARD_RADIUS, box.height / 2)
     const card = append(parent, 'rect', {
@@ -901,9 +907,9 @@ export default class InkRenderer extends BaseRenderer {
     })
     const iconY = box.y + 13
     if (is(element, 'bpmn:UserTask')) {
-      drawPerson(parent, 13, iconY, INK.userIcon)
+      drawPerson(parent, 13, iconY, PALETTE.userIcon)
     } else if (is(element, 'bpmn:ServiceTask')) {
-      drawGear(parent, 13, iconY, INK.serviceIcon)
+      drawGear(parent, 13, iconY, PALETTE.serviceIcon)
     }
     this.drawLabel(parent, element, box)
     return card
@@ -912,8 +918,8 @@ export default class InkRenderer extends BaseRenderer {
   private drawEvent(parent: SVGElement, element: Shape) {
     const end = is(element, 'bpmn:EndEvent')
     const base = getFillColor(element, eventFill(element))
-    const fill = materialPaint(parent, `ink-event-${element.id}`, base)
-    const edge = getStrokeColor(element, end ? INK.endStroke : softEdge(base))
+    const fill = materialPaint(parent, `theme-event-${element.id}`, base)
+    const edge = getStrokeColor(element, end ? PALETTE.endStroke : softEdge(base))
     const radius = Math.min(element.width, element.height) / 2
     const cx = element.width / 2
     const cy = element.height / 2
@@ -946,8 +952,8 @@ export default class InkRenderer extends BaseRenderer {
   }
 
   private drawGateway(parent: SVGElement, element: Shape) {
-    const base = getFillColor(element, INK.gatewayFill)
-    const fill = materialPaint(parent, `ink-gateway-${element.id}`, base)
+    const base = getFillColor(element, PALETTE.gatewayFill)
+    const fill = materialPaint(parent, `theme-gateway-${element.id}`, base)
     const edge = getStrokeColor(element, softEdge(base))
     const cx = element.width / 2
     const cy = element.height / 2
@@ -1032,7 +1038,7 @@ export default class InkRenderer extends BaseRenderer {
       padding: { top: 4, right: 6, bottom: 4, left: 6 },
       style: {
         ...this.textRenderer.getDefaultStyle(),
-        fill: INK.text,
+        fill: PALETTE.text,
         fontFamily: '"Source Sans 3", "PingFang SC", "Microsoft YaHei", sans-serif',
       },
     })
@@ -1041,15 +1047,20 @@ export default class InkRenderer extends BaseRenderer {
   }
 }
 
-export function patchInkTaskSize(elementFactory: ElementFactoryLike) {
-  const getDefaultSize = elementFactory.getDefaultSize.bind(elementFactory)
-  elementFactory.getDefaultSize = (semantic, di) => {
-    const size = getDefaultSize(semantic, di)
-    if (isInkTheme() && is(semantic as Element, 'bpmn:Task')) {
-      return { width: TASK_WIDTH, height: CARD_HEIGHT }
-    }
-    return size
-  }
-}
+type InjectablePatch = ((elementFactory: ElementFactoryLike) => void) & { $inject?: string[] }
 
-patchInkTaskSize.$inject = ['elementFactory']
+// 各主题的新建节点尺寸补丁形态一致，只有“当前是否该主题”的判断不同。
+export function createTaskSizePatch(isActive: () => boolean) {
+  const patch: InjectablePatch = (elementFactory) => {
+    const getDefaultSize = elementFactory.getDefaultSize.bind(elementFactory)
+    elementFactory.getDefaultSize = (semantic, di) => {
+      const size = getDefaultSize(semantic, di)
+      if (isActive() && is(semantic as Element, 'bpmn:Task')) {
+        return { width: TASK_WIDTH, height: CARD_HEIGHT }
+      }
+      return size
+    }
+  }
+  patch.$inject = ['elementFactory']
+  return patch
+}

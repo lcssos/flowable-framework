@@ -1,5 +1,4 @@
-import { AMBER_ID } from './tokens'
-
+// 主题公共图标库：基础图形与墨蓝/琥珀/多彩各主题共用一套，靠 data-theme 选择器归属到具体主题。
 const svg = (body: string) =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`
 
@@ -128,18 +127,21 @@ Object.entries(aliases).forEach(([name, source]) => {
   icons[name] = icons[source]
 })
 
-export const installAmberIcons = () => {
-  let style = document.head.querySelector<HTMLStyleElement>('style[data-amber-icons]')
+// 图标以 currentColor 做遮罩，颜色由使用方决定，因此同一套图标可以供多个主题复用。
+// styleKey 默认按主题 id 派生，主题需要独立图标表时可自行传入。
+export const installThemeIcons = (themeId: string, styleKey = `${themeId}-icons`) => {
+  const selector = `style[data-${styleKey}]`
+  let style = document.head.querySelector<HTMLStyleElement>(selector)
   if (!style) {
     style = document.createElement('style')
-    style.dataset.amberIcons = 'true'
+    style.setAttribute(`data-${styleKey}`, 'true')
     document.head.appendChild(style)
   }
   style.textContent = Object.entries(icons)
     .map(([name, markup]) => {
       const uri = `data:image/svg+xml,${encodeURIComponent(markup)}`
       return (
-        `html[data-theme='${AMBER_ID}'] .bpmn-icon-${name}:before{` +
+        `html[data-theme='${themeId}'] .bpmn-icon-${name}:before{` +
         `content:'';width:1em;height:1em;background-color:currentColor;` +
         `-webkit-mask:url("${uri}") center/contain no-repeat;` +
         `mask:url("${uri}") center/contain no-repeat}`
@@ -147,3 +149,5 @@ export const installAmberIcons = () => {
     })
     .join('')
 }
+
+
