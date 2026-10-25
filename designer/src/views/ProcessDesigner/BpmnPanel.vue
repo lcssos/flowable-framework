@@ -325,6 +325,7 @@ const elementExists = (element: Element, elementRegistry: ElementRegistry) => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  background-color: var(--el-bg-color-page);
 }
 
 .panel-heading {
@@ -334,7 +335,8 @@ const elementExists = (element: Element, elementRegistry: ElementRegistry) => {
   justify-content: space-between;
   gap: 12px;
   padding: 14px 16px 12px;
-  border-bottom: 1px solid var(--el-border-color);
+  border-bottom: 1px solid var(--el-border-color-extra-light);
+  background-color: var(--el-bg-color);
 }
 
 .panel-heading__name {
@@ -371,6 +373,49 @@ const elementExists = (element: Element, elementRegistry: ElementRegistry) => {
 
   .el-tabs__header {
     margin: 0;
+    background-color: var(--el-bg-color);
+  }
+}
+
+.panel-container {
+  :deep(.el-collapse) {
+    border: none;
+    background-color: transparent;
+  }
+
+  :deep(.el-collapse-item) {
+    margin: 12px;
+    overflow: hidden;
+    background-color: var(--el-bg-color);
+    border-radius: 10px;
+    box-shadow: 0 0 0 1px var(--el-border-color-extra-light);
+  }
+
+  :deep(.el-collapse-item__header) {
+    height: 42px;
+    padding: 0 14px;
+    font-size: 13px;
+    font-weight: 600;
+    border-bottom: none;
+    background-color: transparent;
+
+    &::before {
+      display: none;
+    }
+  }
+
+  :deep(.el-collapse-item__wrap) {
+    border-bottom: none;
+    background-color: transparent;
+  }
+
+  :deep(.el-collapse-item__content) {
+    padding: 0 14px;
+  }
+
+  :deep(.el-collapse-item__content .el-form-item) {
+    margin-bottom: 0;
+    padding: 10px 0;
   }
 }
 </style>
