@@ -4,6 +4,7 @@ import ExclusiveGatewayRender from '@/views/ProcessDesigner/Renderer/RewriteRend
 import { InkRenderer, patchInkTaskSize } from '@/theme/ink'
 import { AmberRenderer, patchAmberTaskSize } from '@/theme/amber'
 import { ColorfulRenderer, patchColorfulTaskSize } from '@/theme/colorful'
+import { ChinaRenderer, patchChinaTaskSize } from '@/theme/china'
 
 const httpTaskRenderer = {
   __init__: [
@@ -17,6 +18,8 @@ const httpTaskRenderer = {
     'amberTaskSize',
     'colorfulRenderer',
     'colorfulTaskSize',
+    'chinaRenderer',
+    'chinaTaskSize',
   ],
   variableEventRenderer: ['type', VariableEventRenderer],
   neutralElementColors: ['type', class {}],
@@ -28,6 +31,8 @@ const httpTaskRenderer = {
   amberTaskSize: ['type', patchAmberTaskSize],
   colorfulRenderer: ['type', ColorfulRenderer],
   colorfulTaskSize: ['type', patchColorfulTaskSize],
+  chinaRenderer: ['type', ChinaRenderer],
+  chinaTaskSize: ['type', patchChinaTaskSize],
 }
 
 export default httpTaskRenderer

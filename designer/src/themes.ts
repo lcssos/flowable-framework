@@ -1,4 +1,4 @@
-// 主题登记。渲染型主题（ink/amber/colorful）在 src/theme/<id> 自成主题包，
+// 主题登记。渲染型主题（ink/amber/colorful/china）在 src/theme/<id> 自成主题包，
 // 纯样式主题在 styles/themes/<id>.scss，文案在 ui.themes.<id>。
 // dark 为 true 时给 html 加上 dark，让 Element Plus 暗色变量生效。
 export const themes = [
@@ -7,6 +7,7 @@ export const themes = [
   { id: 'dark', dark: true },
   { id: 'amber', dark: false },
   { id: 'colorful', dark: false },
+  { id: 'china', dark: false },
 ] as const
 
 export type ThemeId = (typeof themes)[number]['id']

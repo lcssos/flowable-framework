@@ -1,0 +1,147 @@
+// 国风主题（水墨）：宣纸、墨色、朱砂印。界面主色取墨而不是朱，朱砂只留给印章与版框。
+// 图形语言来自 theme/shared 公共渲染器，这里负责界面层：纸纹、墨晕、朱丝栏、双线书口。
+html[data-theme='china'] {
+  --el-color-primary: #2b2b24;
+  --el-color-primary-light-3: #6a6a60;
+  --el-color-primary-light-5: #95958b;
+  --el-color-primary-light-7: #c1c1b8;
+  --el-color-primary-light-8: #d6d6ce;
+  --el-color-primary-light-9: #ebebe5;
+  --el-color-primary-dark-2: #1f1f19;
+  // 与其余主题保持一致；方形只用在保存按钮（印章）这类明确的强调件上。
+  --el-border-radius-base: 6px;
+  --el-bg-color: #fafaf7;
+  --el-bg-color-page: #f0f0ea;
+  --el-bg-color-overlay: #fafaf7;
+  --el-text-color-primary: #22221d;
+  --el-text-color-regular: #43433c;
+  --el-text-color-secondary: #77776f;
+  --el-border-color: #d5d4cb;
+  --el-border-color-light: #e4e3da;
+  --el-fill-color-blank: #fafaf7;
+  --el-fill-color-light: #f0f0ea;
+  --el-fill-color-lighter: #f6f6f1;
+  --designer-paper: #e2e2db;
+  --designer-canvas: #f6f6f1;
+  --designer-chrome: #eaeae3;
+  --designer-chrome-fill: linear-gradient(180deg, #fcfbf8 0%, #eaeae3 100%);
+  --designer-panel: #e5e5de;
+  --designer-panel-fill: linear-gradient(180deg, #f5f5ef 0%, #e5e5de 180px);
+  --designer-save: #a6392e;
+  --designer-save-hover: #8b2f26;
+}
+
+html[data-theme='china'] .djs-parent {
+  --palette-background-color: rgba(250, 250, 247, 0.8);
+  --palette-border-color: rgba(34, 34, 29, 0.12);
+  --palette-entry-color: #3d3d36;
+  --palette-entry-hover-color: rgba(34, 34, 29, 0.08);
+  --popup-background-color: rgba(250, 250, 247, 0.95);
+  --popup-border-color: rgba(34, 34, 29, 0.12);
+  --popup-entry-hover-color: rgba(34, 34, 29, 0.06);
+  --context-pad-entry-background-color: transparent;
+  --context-pad-entry-hover-background-color: rgba(34, 34, 29, 0.07);
+  --context-pad-background-color: #fafaf7;
+  --context-pad-border-color: rgba(34, 34, 29, 0.12);
+  --context-pad-shadow:
+    0 8px 20px rgba(34, 34, 29, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+  --context-pad-divider-color: rgba(34, 34, 29, 0.12);
+  --context-pad-entry-color: #3d3d36;
+  --bjsl-fill-color: #f6f6f1;
+  --bjsl-stroke-color: #42423b;
+}
+
+// 双线书口：栏线下压一道朱砂细线，像古籍版心的朱墨两色界栏。
+html[data-theme='china'] .design-header,
+html[data-theme='china'] .design-inner__header {
+  background: linear-gradient(180deg, #fcfbf8 0%, var(--designer-chrome) 100%);
+  border-bottom: 1px solid rgba(166, 57, 46, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 2px 0 -1px rgba(34, 34, 29, 0.14);
+}
+
+// 画布：一层极淡的墨晕打底，再叠两层错位纸纹，避免成为均匀噪点。
+html[data-theme='china'] .design-inner__main {
+  background-color: var(--designer-canvas);
+  background-image:
+    radial-gradient(58% 42% at 14% 4%, rgba(58, 58, 50, 0.055), transparent 72%),
+    radial-gradient(rgba(45, 45, 40, 0.05) 0.8px, transparent 0.9px),
+    radial-gradient(rgba(45, 45, 40, 0.032) 0.8px, transparent 0.9px);
+  background-size:
+    100% 100%,
+    22px 22px,
+    13px 13px;
+  background-position:
+    0 0,
+    0 0,
+    6px 8px;
+  background-repeat: no-repeat, repeat, repeat;
+}
+
+// 朱丝栏：侧栏内缘一道朱砂竖线，替代普通分割线。
+html[data-theme='china'] .design-aside {
+  background: linear-gradient(180deg, #f5f5ef 0%, var(--designer-panel) 140px);
+  border-left-color: rgba(166, 57, 46, 0.24);
+  box-shadow: inset 3px 0 0 rgba(166, 57, 46, 0.14);
+}
+
+html[data-theme='china'] .design-aside .panel-heading {
+  background: linear-gradient(180deg, rgba(250, 250, 247, 0.72), rgba(250, 250, 247, 0));
+  border-bottom-color: rgba(34, 34, 29, 0.1);
+  letter-spacing: 0.04em;
+}
+
+html[data-theme='china'] .design-aside .el-tabs__header,
+html[data-theme='china'] .design-aside .el-collapse,
+html[data-theme='china'] .design-aside .el-collapse-item__header,
+html[data-theme='china'] .design-aside .el-collapse-item__wrap {
+  background: transparent;
+  border-color: transparent;
+}
+
+html[data-theme='china'] .design-aside .el-tabs__nav-wrap::after {
+  height: 1px;
+  background: rgba(34, 34, 29, 0.1);
+}
+
+html[data-theme='china'] .design-aside .el-collapse-item__header {
+  font-weight: 600;
+}
+
+html[data-theme='china'] .design-aside .el-input__wrapper,
+html[data-theme='china'] .design-aside .el-select__wrapper,
+html[data-theme='china'] .design-aside .el-textarea__inner {
+  background: #fafaf7;
+  box-shadow: 0 0 0 1px rgba(34, 34, 29, 0.12);
+}
+
+// 顶部按钮：纸面底、墨色发丝边；保存按钮做成朱砂印章。
+html[data-theme='china'] .design-header .el-button:not(.design-save),
+html[data-theme='china'] .design-inner__header .el-button {
+  --el-button-bg-color: rgba(250, 250, 247, 0.9);
+  --el-button-border-color: rgba(34, 34, 29, 0.12);
+  box-shadow: 0 1px 0 rgba(34, 34, 29, 0.04);
+}
+
+// 保存按钮沿用全局按钮形态，只由 --designer-save 提供朱砂底色，不再单独改圆角与字距。
+
+// 品牌名用宋体，配字距，像书名页题签。
+html[data-theme='china'] .design-brand__name {
+  font-family: 'Songti SC', 'STSong', 'SimSun', 'Noto Serif SC', serif;
+  letter-spacing: 0.1em;
+}
+
+html[data-theme='china'] .bjs-container .djs-palette {
+  border-radius: 6px;
+  box-shadow:
+    0 8px 22px rgba(34, 34, 29, 0.1),
+    0 0 0 1px rgba(34, 34, 29, 0.14) inset;
+  backdrop-filter: blur(12px);
+}
+
+html[data-theme='china'] .djs-parent .djs-palette .entry:hover,
+html[data-theme='china'] .djs-parent .djs-context-pad .entry:hover {
+  background-color: rgba(34, 34, 29, 0.07);
+}

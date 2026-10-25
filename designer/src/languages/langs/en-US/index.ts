@@ -10,6 +10,7 @@ export default {
       dark: 'Dark',
       amber: 'Amber',
       colorful: 'Colorful',
+      china: 'Ink Wash',
     },
     labelPositionTop: 'Top labels',
     labelPositionLeft: 'Left labels',
