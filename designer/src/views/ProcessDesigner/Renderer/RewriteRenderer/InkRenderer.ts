@@ -146,6 +146,172 @@ const dockedWaypoints = (connection: Connection) => {
   return points
 }
 
+type Waypoint = { x: number; y: number }
+
+const HOP = 3.5
+
+const segmentCross = (from: Waypoint, to: Waypoint, otherFrom: Waypoint, otherTo: Waypoint) => {
+  const rx = to.x - from.x
+  const ry = to.y - from.y
+  const sx = otherTo.x - otherFrom.x
+  const sy = otherTo.y - otherFrom.y
+  const denom = rx * sy - ry * sx
+  if (Math.abs(denom) < 0.001) {
+    return null
+  }
+  const qpx = otherFrom.x - from.x
+  const qpy = otherFrom.y - from.y
+  const t = (qpx * sy - qpy * sx) / denom
+  const u = (qpx * ry - qpy * rx) / denom
+  if (t <= 0.06 || t >= 0.94 || u <= 0.06 || u >= 0.94) {
+    return null
+  }
+  return { t, at: { x: from.x + t * rx, y: from.y + t * ry } }
+}
+
+const circleCross = (from: Waypoint, to: Waypoint, center: Waypoint, radius: number) => {
+  const dx = to.x - from.x
+  const dy = to.y - from.y
+  const fx = from.x - center.x
+  const fy = from.y - center.y
+  const a = dx * dx + dy * dy
+  if (a === 0) {
+    return []
+  }
+  const b = 2 * (fx * dx + fy * dy)
+  const c = fx * fx + fy * fy - radius * radius
+  const disc = b * b - 4 * a * c
+  if (disc < 0) {
+    return []
+  }
+  const root = Math.sqrt(disc)
+  return [(-b - root) / (2 * a), (-b + root) / (2 * a)]
+    .filter((t) => t > 0.06 && t < 0.94)
+    .map((t) => ({ t, at: { x: from.x + t * dx, y: from.y + t * dy } }))
+}
+
+const outlineSegments = (element: Shape) => {
+  if (isAny(element, TASK_TYPES)) {
+    const rect = visualRect(element)
+    const corners = [
+      { x: rect.x, y: rect.y },
+      { x: rect.x + rect.width, y: rect.y },
+      { x: rect.x + rect.width, y: rect.y + rect.height },
+      { x: rect.x, y: rect.y + rect.height },
+    ]
+    return [
+      [corners[0], corners[1]],
+      [corners[1], corners[2]],
+      [corners[2], corners[3]],
+      [corners[3], corners[0]],
+    ]
+  }
+  if (is(element, 'bpmn:Gateway')) {
+    const cx = element.x + element.width / 2
+    const cy = element.y + element.height / 2
+    const corners = [
+      { x: cx, y: element.y },
+      { x: element.x + element.width, y: cy },
+      { x: cx, y: element.y + element.height },
+      { x: element.x, y: cy },
+    ]
+    return [
+      [corners[0], corners[1]],
+      [corners[1], corners[2]],
+      [corners[2], corners[3]],
+      [corners[3], corners[0]],
+    ]
+  }
+  return []
+}
+
+const shapeCenter = (element: Shape) => {
+  if (isAny(element, TASK_TYPES)) {
+    const rect = visualRect(element)
+    return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }
+  }
+  return { x: element.x + element.width / 2, y: element.y + element.height / 2 }
+}
+
+const hopNormal = (from: Waypoint, to: Waypoint, awayFrom?: Waypoint, at?: Waypoint) => {
+  const dx = to.x - from.x
+  const dy = to.y - from.y
+  const len = Math.hypot(dx, dy) || 1
+  let nx = -dy / len
+  let ny = dx / len
+  if (awayFrom && at) {
+    if (nx * (at.x - awayFrom.x) + ny * (at.y - awayFrom.y) < 0) {
+      nx = -nx
+      ny = -ny
+    }
+    return { nx, ny }
+  }
+  if (Math.abs(dx) >= Math.abs(dy) ? ny > 0 : nx < 0) {
+    nx = -nx
+    ny = -ny
+  }
+  return { nx, ny }
+}
+
+const hopPoints = (from: Waypoint, to: Waypoint, at: Waypoint, awayFrom?: Waypoint) => {
+  const dx = to.x - from.x
+  const dy = to.y - from.y
+  const len = Math.hypot(dx, dy) || 1
+  const along = Math.hypot(at.x - from.x, at.y - from.y)
+  if (along < HOP + 1 || len - along < HOP + 1) {
+    return []
+  }
+  const ux = dx / len
+  const uy = dy / len
+  const start = { x: at.x - ux * HOP, y: at.y - uy * HOP }
+  const end = { x: at.x + ux * HOP, y: at.y + uy * HOP }
+  const { nx, ny } = hopNormal(from, to, awayFrom, at)
+  const arc = [start]
+  for (let step = 1; step < 6; step += 1) {
+    const ratio = step / 6
+    arc.push({
+      x: start.x + (end.x - start.x) * ratio + nx * Math.sin(Math.PI * ratio) * HOP,
+      y: start.y + (end.y - start.y) * ratio + ny * Math.sin(Math.PI * ratio) * HOP,
+    })
+  }
+  arc.push(end)
+  return arc
+}
+
+const weaveHops = (
+  points: Waypoint[],
+  hits: { index: number; t: number; at: Waypoint; awayFrom?: Waypoint }[],
+) => {
+  const grouped = new Map<number, typeof hits>()
+  hits.forEach((hit) => {
+    const list = grouped.get(hit.index) || []
+    list.push(hit)
+    grouped.set(hit.index, list)
+  })
+  const woven: Waypoint[] = [points[0]]
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const from = points[index]
+    const to = points[index + 1]
+    const length = Math.hypot(to.x - from.x, to.y - from.y) || 1
+    let last = 0
+    ;(grouped.get(index) || [])
+      .sort((left, right) => left.t - right.t)
+      .forEach((hit) => {
+        if ((hit.t - last) * length < HOP * 2.4) {
+          return
+        }
+        const arc = hopPoints(from, to, hit.at, hit.awayFrom)
+        if (!arc.length) {
+          return
+        }
+        woven.push(...arc)
+        last = hit.t
+      })
+    woven.push(to)
+  }
+  return woven
+}
+
 const append = (parent: SVGElement, name: string, attrs: Record<string, string | number>) => {
   const node = svgCreate(name, attrs)
   svgAppend(parent, node)
@@ -354,6 +520,9 @@ export default class InkRenderer extends BaseRenderer {
   static $inject = ['eventBus', 'textRenderer', 'elementRegistry', 'graphicsFactory']
 
   private readonly textRenderer: TextRendererLike
+  private readonly registry: RegistryLike
+  private readonly graphics: FactoryLike
+  private readonly crossingRefresh = new Set<string>()
 
   constructor(
     eventBus: EventBus,
@@ -363,6 +532,8 @@ export default class InkRenderer extends BaseRenderer {
   ) {
     super(eventBus, 1700)
     this.textRenderer = textRenderer
+    this.registry = elementRegistry
+    this.graphics = graphicsFactory
     installInkIcons()
     window.addEventListener('designer-theme', () => {
       const shapes: Element[] = []
@@ -406,7 +577,7 @@ export default class InkRenderer extends BaseRenderer {
   }
 
   drawConnection(parent: SVGElement, element: Connection) {
-    const points = dockedWaypoints(element)
+    const points = this.withPassArcs(element, dockedWaypoints(element))
     const color = getStrokeColor(element, INK.stroke)
     const message = is(element, 'bpmn:MessageFlow')
     const attrs: Record<string, string | number> = {
@@ -457,6 +628,73 @@ export default class InkRenderer extends BaseRenderer {
     return componentsToPath(waypoints)
   }
 
+  private withPassArcs(connection: Connection, points: Waypoint[]) {
+    if (points.length < 2 || !is(connection, 'bpmn:SequenceFlow')) {
+      return points
+    }
+    const hits: { index: number; t: number; at: Waypoint; awayFrom?: Waypoint }[] = []
+    this.registry.forEach((item) => {
+      if (!item.parent || isLabel(item) || item === (connection as unknown as Element)) {
+        return
+      }
+      if ('waypoints' in item && is(item, 'bpmn:SequenceFlow')) {
+        if (String(connection.id) < String(item.id)) {
+          this.queueCrossingRefresh(item)
+          return
+        }
+        const other = dockedWaypoints(item as Connection)
+        for (let index = 0; index < points.length - 1; index += 1) {
+          for (let otherIndex = 0; otherIndex < other.length - 1; otherIndex += 1) {
+            const hit = segmentCross(
+              points[index],
+              points[index + 1],
+              other[otherIndex],
+              other[otherIndex + 1],
+            )
+            if (hit) {
+              hits.push({ index, t: hit.t, at: hit.at })
+            }
+          }
+        }
+        return
+      }
+      if (item === connection.source || item === connection.target || !isAny(item, SHAPE_TYPES)) {
+        return
+      }
+      const shape = item as Shape
+      const center = shapeCenter(shape)
+      for (let index = 0; index < points.length - 1; index += 1) {
+        const from = points[index]
+        const to = points[index + 1]
+        const crossings = is(shape, 'bpmn:Event')
+          ? circleCross(from, to, center, Math.min(shape.width, shape.height) / 2)
+          : outlineSegments(shape)
+              .map(([start, end]) => segmentCross(from, to, start, end))
+              .filter((hit): hit is { t: number; at: Waypoint } => Boolean(hit))
+        crossings.forEach((hit) => hits.push({ index, t: hit.t, at: hit.at, awayFrom: center }))
+      }
+    })
+    return weaveHops(points, hits)
+  }
+
+  private queueCrossingRefresh(flow: Element) {
+    if (!flow.id || this.crossingRefresh.has(flow.id)) {
+      return
+    }
+    const gfx = this.registry.getGraphics(flow)
+    if (!gfx) {
+      return
+    }
+    this.crossingRefresh.add(flow.id)
+    queueMicrotask(() => {
+      this.crossingRefresh.delete(flow.id)
+      const next = this.registry.getGraphics(flow)
+      if (next) {
+        this.graphics.update('connection', flow, next)
+      }
+    })
+  }
+
   private flowStartMarker(parent: SVGElement, element: Connection, color: string) {
     const business = getBusinessObject(element)
     const source = element.source && getBusinessObject(element.source)
@@ -486,11 +724,11 @@ export default class InkRenderer extends BaseRenderer {
       stroke: edge,
       'stroke-width': is(element, 'bpmn:CallActivity') ? 1.25 : 0.75,
     })
-    const iconY = box.y + box.height / 2
+    const iconY = box.y + 13
     if (is(element, 'bpmn:UserTask')) {
-      drawPerson(parent, 16, iconY, INK.userIcon)
+      drawPerson(parent, 13, iconY, INK.userIcon)
     } else if (is(element, 'bpmn:ServiceTask')) {
-      drawGear(parent, 16, iconY, INK.serviceIcon)
+      drawGear(parent, 13, iconY, INK.serviceIcon)
     }
     this.drawLabel(parent, element, box)
     return card
@@ -612,7 +850,7 @@ export default class InkRenderer extends BaseRenderer {
     const marked = is(element, 'bpmn:UserTask') || is(element, 'bpmn:ServiceTask')
     const text = this.textRenderer.createText(name, {
       box: {
-        width: marked ? Math.max(element.width - 32, 24) : element.width,
+        width: marked ? Math.max(element.width - 22, 24) : element.width,
         height: box.height,
       },
       align: 'center-middle',
@@ -623,7 +861,7 @@ export default class InkRenderer extends BaseRenderer {
         fontFamily: '"Source Sans 3", "PingFang SC", "Microsoft YaHei", sans-serif',
       },
     })
-    svgAttr(text, { transform: `translate(${marked ? 26 : 0} ${box.y})` })
+    svgAttr(text, { transform: `translate(${marked ? 16 : 0} ${box.y})` })
     svgAppend(parent, text)
   }
 }
