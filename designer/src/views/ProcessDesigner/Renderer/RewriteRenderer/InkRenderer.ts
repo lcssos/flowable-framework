@@ -152,29 +152,79 @@ const append = (parent: SVGElement, name: string, attrs: Record<string, string |
   return node
 }
 
+const mixHex = (from: string, to: string, amount: number) => {
+  const read = (hex: string) => {
+    const value = hex.replace('#', '')
+    if (value.length !== 6) {
+      return null
+    }
+    return [0, 2, 4].map((index) => parseInt(value.slice(index, index + 2), 16))
+  }
+  const start = read(from)
+  const end = read(to)
+  if (!start || !end) {
+    return from
+  }
+  const mixed = start.map((part, index) => Math.round(part + (end[index] - part) * amount))
+  return `#${mixed.map((part) => part.toString(16).padStart(2, '0')).join('')}`
+}
+
+const shapeDefs = (parent: SVGElement) => {
+  let defs = parent.querySelector(':scope > defs') as SVGElement | null
+  if (!defs) {
+    defs = svgCreate('defs')
+    svgAppend(parent, defs)
+  }
+  return defs
+}
+
+const materialPaint = (parent: SVGElement, id: string, base: string) => {
+  if (!base.startsWith('#')) {
+    return base
+  }
+  const gradient = svgCreate('linearGradient', { id, x1: '0', y1: '0', x2: '0', y2: '1' })
+  ;[
+    ['0%', mixHex(base, '#FFFFFF', 0.7)],
+    ['46%', mixHex(base, '#FFFFFF', 0.22)],
+    ['100%', mixHex(base, INK.ink, 0.12)],
+  ].forEach(([offset, color]) => {
+    svgAppend(gradient, svgCreate('stop', { offset, 'stop-color': color }))
+  })
+  svgAppend(shapeDefs(parent), gradient)
+  return `url(#${id})`
+}
+
+const softEdge = (base: string) => (base.startsWith('#') ? mixHex(base, INK.ink, 0.34) : base)
+
 const drawPerson = (parent: SVGElement, x: number, y: number, color: string) => {
-  append(parent, 'circle', { cx: x, cy: y - 4.2, r: 2.7, fill: color, stroke: 'none' })
-  append(parent, 'path', {
-    d: `M${x - 6.2} ${y + 7.4}c.6-3.4 2.8-5.1 6.2-5.1s5.6 1.7 6.2 5.1c.1.6-.3.9-.9.9h-10.6c-.6 0-1-.3-.9-.9z`,
+  const glyph = svgCreate('g')
+  svgAttr(glyph, { transform: `translate(${x} ${y})` })
+  svgAppend(parent, glyph)
+  append(glyph, 'circle', { cx: 0, cy: -4.2, r: 2.7, fill: color, stroke: 'none' })
+  append(glyph, 'path', {
+    d: 'M-6.2 7.4c.6-3.4 2.8-5.1 6.2-5.1s5.6 1.7 6.2 5.1c.1.6-.3.9-.9.9h-10.6c-.6 0-1-.3-.9-.9z',
     fill: color,
     stroke: 'none',
   })
 }
 
 const drawGear = (parent: SVGElement, x: number, y: number, color: string) => {
-  append(parent, 'circle', {
-    cx: x,
-    cy: y,
-    r: 2.5,
+  const glyph = svgCreate('g')
+  svgAttr(glyph, { transform: `translate(${x} ${y})` })
+  svgAppend(parent, glyph)
+  append(glyph, 'circle', {
+    cx: 0,
+    cy: 0,
+    r: 2.4,
     fill: 'none',
     stroke: color,
-    'stroke-width': 1.4,
+    'stroke-width': 1.35,
   })
-  append(parent, 'path', {
-    d: `M${x} ${y - 6.2}v2.1M${x} ${y + 4.1}v2.1M${x - 6.2} ${y}h2.1M${x + 4.1} ${y}h2.1M${x - 4.4} ${y - 4.4}l1.5 1.5M${x + 2.9} ${y + 2.9}l1.5 1.5M${x + 4.4} ${y - 4.4}l-1.5 1.5M${x - 2.9} ${y + 2.9}l-1.5 1.5`,
+  append(glyph, 'path', {
+    d: 'M0-6v2M0 4v2M-6 0h2M4 0h2M-4.2-4.2l1.4 1.4M2.8 2.8l1.4 1.4M4.2-4.2l-1.4 1.4M-2.8 2.8l-1.4 1.4',
     fill: 'none',
     stroke: color,
-    'stroke-width': 1.4,
+    'stroke-width': 1.35,
     'stroke-linecap': 'round',
   })
 }
@@ -421,34 +471,26 @@ export default class InkRenderer extends BaseRenderer {
 
   private drawTask(parent: SVGElement, element: Shape) {
     const box = cardBox(element.height)
-    const stroke = getStrokeColor(element, INK.stroke)
-    const fill = getFillColor(element, taskFill(element))
+    const base = getFillColor(element, taskFill(element))
+    const fill = materialPaint(parent, `ink-task-${element.id}`, base)
+    const edge = getStrokeColor(element, softEdge(base))
     const radius = Math.min(CARD_RADIUS, box.height / 2)
     const card = append(parent, 'rect', {
-      x: 0,
-      y: box.y,
-      width: element.width,
-      height: box.height,
+      x: 0.5,
+      y: box.y + 0.5,
+      width: element.width - 1,
+      height: box.height - 1,
       rx: radius,
       ry: radius,
       fill,
-      stroke,
-      'stroke-width': is(element, 'bpmn:CallActivity') ? 2.4 : 1.5,
+      stroke: edge,
+      'stroke-width': is(element, 'bpmn:CallActivity') ? 1.25 : 0.75,
     })
-    if (is(element, 'bpmn:UserTask') || is(element, 'bpmn:ServiceTask')) {
-      const badgeY = box.y + box.height / 2
-      append(parent, 'circle', {
-        cx: 22,
-        cy: badgeY,
-        r: 13,
-        fill: INK.badge,
-        stroke: 'none',
-      })
-      if (is(element, 'bpmn:UserTask')) {
-        drawPerson(parent, 22, badgeY, INK.onBadge)
-      } else {
-        drawGear(parent, 22, badgeY, INK.onBadge)
-      }
+    const iconY = box.y + box.height / 2
+    if (is(element, 'bpmn:UserTask')) {
+      drawPerson(parent, 16, iconY, INK.userIcon)
+    } else if (is(element, 'bpmn:ServiceTask')) {
+      drawGear(parent, 16, iconY, INK.serviceIcon)
     }
     this.drawLabel(parent, element, box)
     return card
@@ -456,8 +498,9 @@ export default class InkRenderer extends BaseRenderer {
 
   private drawEvent(parent: SVGElement, element: Shape) {
     const end = is(element, 'bpmn:EndEvent')
-    const stroke = getStrokeColor(element, end ? INK.endStroke : INK.stroke)
-    const fill = getFillColor(element, eventFill(element))
+    const base = getFillColor(element, eventFill(element))
+    const fill = materialPaint(parent, `ink-event-${element.id}`, base)
+    const edge = getStrokeColor(element, end ? INK.endStroke : softEdge(base))
     const radius = Math.min(element.width, element.height) / 2
     const cx = element.width / 2
     const cy = element.height / 2
@@ -470,8 +513,8 @@ export default class InkRenderer extends BaseRenderer {
       cy,
       r: end ? radius - 2.2 : radius - 1,
       fill,
-      stroke,
-      'stroke-width': end ? 3.2 : 1.6,
+      stroke: edge,
+      'stroke-width': end ? 1.5 : 0.9,
       'stroke-dasharray': dashed ? '3 2.2' : 'none',
     })
     if (!end && !is(element, 'bpmn:StartEvent')) {
@@ -480,18 +523,19 @@ export default class InkRenderer extends BaseRenderer {
         cy,
         r: radius - 4.2,
         fill: 'none',
-        stroke,
-        'stroke-width': 1.3,
+        stroke: edge,
+        'stroke-width': 0.9,
         'stroke-dasharray': dashed ? '3 2.2' : 'none',
       })
     }
-    drawSymbol(parent, eventKind(element), cx, cy, stroke)
+    drawSymbol(parent, eventKind(element), cx, cy, edge)
     return circle
   }
 
   private drawGateway(parent: SVGElement, element: Shape) {
-    const stroke = getStrokeColor(element, INK.stroke)
-    const fill = getFillColor(element, INK.gatewayFill)
+    const base = getFillColor(element, INK.gatewayFill)
+    const fill = materialPaint(parent, `ink-gateway-${element.id}`, base)
+    const edge = getStrokeColor(element, softEdge(base))
     const cx = element.width / 2
     const cy = element.height / 2
     if (is(element, 'bpmn:ExclusiveGateway')) {
@@ -500,8 +544,8 @@ export default class InkRenderer extends BaseRenderer {
     const diamond = append(parent, 'path', {
       d: `M${cx} 0 L${element.width} ${cy} L${cx} ${element.height} L0 ${cy} Z`,
       fill,
-      stroke,
-      'stroke-width': 1.6,
+      stroke: edge,
+      'stroke-width': 0.9,
       'stroke-linejoin': 'round',
     })
     const mark = is(element, 'bpmn:ParallelGateway')
@@ -517,8 +561,8 @@ export default class InkRenderer extends BaseRenderer {
       append(parent, 'path', {
         d: `M${cx} ${cy - 8}v16M${cx - 8} ${cy}h16`,
         fill: 'none',
-        stroke,
-        'stroke-width': 2.2,
+        stroke: edge,
+        'stroke-width': 1.7,
         'stroke-linecap': 'round',
       })
     } else if (mark === 'inclusive') {
@@ -527,23 +571,23 @@ export default class InkRenderer extends BaseRenderer {
         cy,
         r: element.width * 0.18,
         fill: 'none',
-        stroke,
-        'stroke-width': 1.8,
+        stroke: edge,
+        'stroke-width': 1.5,
       })
     } else if (mark === 'complex') {
       append(parent, 'path', {
         d: `M${cx} ${cy - 8}v16M${cx - 7} ${cy - 4.5}l14 9M${cx + 7} ${cy - 4.5}l-14 9`,
         fill: 'none',
-        stroke,
-        'stroke-width': 1.7,
+        stroke: edge,
+        'stroke-width': 1.5,
         'stroke-linecap': 'round',
       })
     } else if (mark === 'xor') {
       append(parent, 'path', {
-        d: `M${cx - 7} ${cy - 7} L${cx + 7} ${cy + 7} M${cx + 7} ${cy - 7} L${cx - 7} ${cy + 7}`,
+        d: `M${cx - 6} ${cy - 6} L${cx + 6} ${cy + 6} M${cx + 6} ${cy - 6} L${cx - 6} ${cy + 6}`,
         fill: 'none',
-        stroke,
-        'stroke-width': 2.2,
+        stroke: edge,
+        'stroke-width': 1.7,
         'stroke-linecap': 'round',
       })
     } else {
@@ -552,10 +596,10 @@ export default class InkRenderer extends BaseRenderer {
         cy,
         r: element.width * 0.16,
         fill: 'none',
-        stroke,
-        'stroke-width': 1.4,
+        stroke: edge,
+        'stroke-width': 1.2,
       })
-      drawSymbol(parent, mark, cx, cy, stroke)
+      drawSymbol(parent, mark, cx, cy, edge)
     }
     return diamond
   }
@@ -565,10 +609,10 @@ export default class InkRenderer extends BaseRenderer {
     if (!name) {
       return
     }
-    const badged = is(element, 'bpmn:UserTask') || is(element, 'bpmn:ServiceTask')
+    const marked = is(element, 'bpmn:UserTask') || is(element, 'bpmn:ServiceTask')
     const text = this.textRenderer.createText(name, {
       box: {
-        width: badged ? Math.max(element.width - 48, 24) : element.width,
+        width: marked ? Math.max(element.width - 32, 24) : element.width,
         height: box.height,
       },
       align: 'center-middle',
@@ -579,7 +623,7 @@ export default class InkRenderer extends BaseRenderer {
         fontFamily: '"Source Sans 3", "PingFang SC", "Microsoft YaHei", sans-serif',
       },
     })
-    svgAttr(text, { transform: `translate(${badged ? 40 : 0} ${box.y})` })
+    svgAttr(text, { transform: `translate(${marked ? 26 : 0} ${box.y})` })
     svgAppend(parent, text)
   }
 }

@@ -18,22 +18,82 @@ html[data-theme='ink'] {
   --el-fill-color-blank: #ffffff;
   --el-fill-color-light: #f3f5f7;
   --el-fill-color-lighter: #f7f9fb;
-  --designer-paper: #f3f5f7;
-  --designer-canvas: #ffffff;
+  --designer-paper: #e7ebf0;
+  --designer-canvas: #f7f8fa;
+  --designer-chrome: #e8edf2;
+  --designer-chrome-fill: linear-gradient(180deg, #fbfcfd 0%, #e8edf2 100%);
+  --designer-panel: #e3e8ee;
+  --designer-panel-fill: linear-gradient(180deg, #f4f6f9 0%, #e3e8ee 180px);
   --designer-save: #c2453d;
   --designer-save-hover: #a83b34;
 }
 
 html[data-theme='ink'] .djs-parent {
-  --palette-background-color: #ffffff;
-  --palette-border-color: #d7dee6;
-  --palette-entry-color: #1b2838;
-  --palette-entry-hover-color: #e9eef2;
-  --popup-background-color: #ffffff;
-  --popup-border-color: #d7dee6;
-  --popup-entry-hover-color: #e9eef2;
-  --context-pad-entry-background-color: #ffffff;
-  --context-pad-entry-hover-background-color: #e9eef2;
-  --bjsl-fill-color: #ffffff;
-  --bjsl-stroke-color: #1b2838;
+  --palette-background-color: rgba(255, 255, 255, 0.72);
+  --palette-border-color: rgba(27, 40, 56, 0.08);
+  --palette-entry-color: #24384c;
+  --palette-entry-hover-color: rgba(31, 75, 110, 0.08);
+  --popup-background-color: rgba(251, 252, 253, 0.94);
+  --popup-border-color: rgba(27, 40, 56, 0.08);
+  --popup-entry-hover-color: rgba(31, 75, 110, 0.08);
+  --context-pad-entry-background-color: rgba(251, 252, 253, 0.94);
+  --context-pad-entry-hover-background-color: rgba(31, 75, 110, 0.08);
+  --bjsl-fill-color: #f7f8fa;
+  --bjsl-stroke-color: #31475c;
+}
+
+html[data-theme='ink'] .design-header,
+html[data-theme='ink'] .design-inner__header {
+  background: linear-gradient(180deg, #fbfcfd 0%, var(--designer-chrome) 100%);
+  border-bottom-color: rgba(27, 40, 56, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+html[data-theme='ink'] .design-header .el-button:not(.design-save),
+html[data-theme='ink'] .design-inner__header .el-button {
+  --el-button-bg-color: rgba(255, 255, 255, 0.88);
+  --el-button-border-color: rgba(27, 40, 56, 0.08);
+  box-shadow: 0 1px 1px rgba(27, 40, 56, 0.04);
+}
+
+html[data-theme='ink'] .design-aside {
+  background: linear-gradient(180deg, #f5f7fa 0%, var(--designer-panel) 140px);
+  border-left-color: rgba(27, 40, 56, 0.08);
+}
+
+html[data-theme='ink'] .design-aside .panel-heading {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0));
+  border-bottom-color: rgba(27, 40, 56, 0.08);
+}
+
+html[data-theme='ink'] .design-aside .el-tabs__header,
+html[data-theme='ink'] .design-aside .el-collapse,
+html[data-theme='ink'] .design-aside .el-collapse-item__header,
+html[data-theme='ink'] .design-aside .el-collapse-item__wrap {
+  background: transparent;
+  border-color: transparent;
+}
+
+html[data-theme='ink'] .design-aside .el-tabs__nav-wrap::after {
+  height: 1px;
+  background: rgba(27, 40, 56, 0.08);
+}
+
+html[data-theme='ink'] .design-aside .el-collapse-item__header {
+  font-weight: 600;
+}
+
+html[data-theme='ink'] .design-aside .el-input__wrapper,
+html[data-theme='ink'] .design-aside .el-select__wrapper,
+html[data-theme='ink'] .design-aside .el-textarea__inner {
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(31, 75, 110, 0.1);
+}
+
+html[data-theme='ink'] .bjs-container .djs-palette {
+  border-radius: 14px;
+  box-shadow:
+    0 10px 28px rgba(27, 40, 56, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+  backdrop-filter: blur(16px);
 }

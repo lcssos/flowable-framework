@@ -1,5 +1,5 @@
 const svg = (body: string) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`
 
 const person =
   '<circle cx="12" cy="8" r="2.6" fill="#000" stroke="none"/>' +
@@ -23,10 +23,9 @@ const terminate = '<circle cx="12" cy="12" r="3.1" fill="#000" stroke="none"/>'
 const multiple = '<path d="M12 8.4 15.4 10.6 14.2 14.6H9.8L8.6 10.6z"/>'
 const parallel = '<path d="M12 8.6v6.8M8.6 12h6.8"/>'
 const xor = '<path d="M8.4 8.4 15.6 15.6M15.6 8.4 8.4 15.6"/>'
-const taskCard = '<rect x="3.2" y="6.2" width="17.6" height="11.6" rx="3"/>'
 const ring = (dashed = false) =>
-  `<circle cx="12" cy="12" r="7.4"${dashed ? ' stroke-dasharray="2.4 1.8"' : ''}/>`
-const endRing = '<circle cx="12" cy="12" r="6.3" stroke-width="2.6"/>'
+  `<circle cx="12" cy="12" r="8" stroke-width="1.15"${dashed ? ' stroke-dasharray="2.2 1.8"' : ''}/>`
+const endRing = '<circle cx="12" cy="12" r="7.2" stroke-width="1.7"/>'
 const doubleRing = `${ring()}<circle cx="12" cy="12" r="5.3"/>`
 const diamond = '<path d="M12 3.6 20.4 12 12 20.4 3.6 12z"/>'
 
@@ -61,23 +60,21 @@ const icons: Record<string, string> = {
   'screw-wrench': svg(
     '<path d="M14.8 6.2a2.4 2.4 0 0 0-3.2 3.1L6.2 14.7a1.6 1.6 0 0 0 2.2 2.2l5.4-5.4a2.4 2.4 0 0 0 3.1-3.2L15 10.2 13.8 9z"/>',
   ),
-  'user-task': svg(`${taskCard}<g transform="translate(5.2 5.4) scale(.56)">${person}</g>`),
-  'service-task': svg(`${taskCard}<g transform="translate(5.6 5.6) scale(.53)">${gear}</g>`),
-  task: svg(taskCard),
-  'task-none': svg(taskCard),
-  'script-task': svg(`${taskCard}<path d="M9 10.2h6M9 12.2h6M9 14.2h4"/>`),
-  'send-task': svg(`${taskCard}<path d="M8.6 12.2h6.2M12.4 9.6 15.2 12.2 12.4 14.8"/>`),
-  'receive-task': svg(`${taskCard}<path d="M15.2 12.2H9M11.4 9.6 8.6 12.2 11.4 14.8"/>`),
-  'manual-task': svg(
-    `${taskCard}<path d="M9 14.4c1.6-2.6 4.6-2.6 6.2 0"/><circle cx="12.1" cy="10.4" r="1.3"/>`,
+  'user-task': svg(`<g transform="translate(1.4 0.2) scale(.9)">${person}</g>`),
+  'service-task': svg(`<g transform="translate(1 1) scale(.92)">${gear}</g>`),
+  task: svg('<rect x="6.2" y="8" width="11.6" height="8" rx="2.4" fill="#000" stroke="none"/>'),
+  'task-none': svg(
+    '<rect x="6.2" y="8" width="11.6" height="8" rx="2.4" fill="#000" stroke="none"/>',
   ),
-  'business-rule': svg(`${taskCard}<path d="M8.6 10.2h6.8M8.6 12.2h6.8M8.6 14.2h4.2"/>`),
-  'business-rule-task': svg(`${taskCard}<path d="M8.6 10.2h6.8M8.6 12.2h6.8M8.6 14.2h4.2"/>`),
-  'call-activity': svg(
-    '<rect x="3.2" y="6.2" width="17.6" height="11.6" rx="3" stroke-width="2.4"/>',
-  ),
-  'subprocess-expanded': svg(`${taskCard}<path d="M12 9.4v5.2M9.4 12h5.2"/>`),
-  'subprocess-collapsed': svg(`${taskCard}<path d="M12 9.4v5.2M9.4 12h5.2"/>`),
+  'script-task': svg('<path d="M7 8.5h10M7 12h10M7 15.5h6"/>'),
+  'send-task': svg('<path d="M6 12h8.5M11.2 8.4 15.6 12 11.2 15.6"/>'),
+  'receive-task': svg('<path d="M18 12H9.5M13 8.4 8.6 12 13 15.6"/>'),
+  'manual-task': svg('<path d="M7.5 15.2c1.8-3 7.2-3 9 0"/><circle cx="12" cy="9.2" r="1.7"/>'),
+  'business-rule': svg('<path d="M7 8.5h10M7 12h10M7 15.5h6"/>'),
+  'business-rule-task': svg('<path d="M7 8.5h10M7 12h10M7 15.5h6"/>'),
+  'call-activity': svg('<rect x="6" y="7.6" width="12" height="8.8" rx="2.6" stroke-width="1.6"/>'),
+  'subprocess-expanded': svg('<path d="M12 8v8M8 12h8"/>'),
+  'subprocess-collapsed': svg('<path d="M12 8v8M8 12h8"/>'),
   participant: svg('<path d="M5 6.5h14v11H5zM8 6.5v11"/>'),
   lane: svg('<path d="M5 6.5h14v11H5zM8 6.5v11"/>'),
   'text-annotation': svg('<path d="M10 6.5H7.5v11H10M7.5 12H14"/>'),
@@ -129,15 +126,13 @@ Object.entries(aliases).forEach(([name, source]) => {
   icons[name] = icons[source]
 })
 
-let installed = false
-
 export const installInkIcons = () => {
-  if (installed) {
-    return
+  let style = document.head.querySelector('style[data-ink-icons]')
+  if (!style) {
+    style = document.createElement('style')
+    style.dataset.inkIcons = 'true'
+    document.head.appendChild(style)
   }
-  installed = true
-  const style = document.createElement('style')
-  style.dataset.inkIcons = 'true'
   style.textContent = Object.entries(icons)
     .map(([name, markup]) => {
       const uri = `data:image/svg+xml,${encodeURIComponent(markup)}`
@@ -149,5 +144,4 @@ export const installInkIcons = () => {
       )
     })
     .join('')
-  document.head.appendChild(style)
 }

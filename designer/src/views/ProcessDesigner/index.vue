@@ -508,7 +508,7 @@ defineExpose({
   width: 16px;
   height: 48px;
   color: var(--el-text-color-secondary);
-  background-color: var(--el-bg-color);
+  background: var(--designer-panel, var(--el-bg-color));
   border: 1px solid var(--el-border-color);
   border-right: none;
   border-radius: 6px 0 0 6px;
@@ -525,7 +525,7 @@ defineExpose({
     height: 56px;
     padding: 0 16px;
     border-bottom: 1px solid var(--el-border-color);
-    background-color: var(--el-bg-color);
+    background: var(--designer-chrome-fill, var(--el-bg-color));
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -538,7 +538,7 @@ defineExpose({
     display: flex;
     align-items: center;
     border-bottom: 1px solid var(--el-border-color);
-    background-color: var(--el-bg-color);
+    background: var(--designer-chrome-fill, var(--el-bg-color));
   }
 
   .design-inner__main {
@@ -551,7 +551,7 @@ defineExpose({
     border-left: 1px solid var(--el-border-color);
     box-shadow: none;
     transition: width 0.2s ease;
-    background-color: var(--el-bg-color);
+    background: var(--designer-panel-fill, var(--el-bg-color));
   }
 }
 
