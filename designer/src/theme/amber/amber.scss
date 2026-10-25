@@ -1,0 +1,106 @@
+// 暖色主题（琥珀）：图形语言与墨蓝主题一致，仅把冷灰蓝换成暖砂／陶土色系。
+html[data-theme='amber'] {
+  --el-color-primary: #9a4b28;
+  --el-color-primary-light-3: #b88168;
+  --el-color-primary-light-5: #cca593;
+  --el-color-primary-light-7: #e0c9be;
+  --el-color-primary-light-8: #eadbd4;
+  --el-color-primary-light-9: #f5ede9;
+  --el-color-primary-dark-2: #7b3c20;
+  --el-border-radius-base: 6px;
+  --el-bg-color: #fffdfa;
+  --el-bg-color-page: #f7f1e8;
+  --el-bg-color-overlay: #fffdfa;
+  --el-text-color-primary: #2e241d;
+  --el-text-color-regular: #55463c;
+  --el-text-color-secondary: #85736a;
+  --el-border-color: #e2d5c7;
+  --el-border-color-light: #ece1d5;
+  --el-fill-color-blank: #fffdfa;
+  --el-fill-color-light: #f7f1e8;
+  --el-fill-color-lighter: #fbf7f1;
+  --designer-paper: #ece2d5;
+  --designer-canvas: #fbf7f1;
+  --designer-chrome: #f1e7d9;
+  --designer-chrome-fill: linear-gradient(180deg, #fefbf6 0%, #f1e7d9 100%);
+  --designer-panel: #eadfce;
+  --designer-panel-fill: linear-gradient(180deg, #f8f2e8 0%, #eadfce 180px);
+  --designer-save: #b8452e;
+  --designer-save-hover: #9c3a26;
+}
+
+html[data-theme='amber'] .djs-parent {
+  --palette-background-color: rgba(255, 253, 250, 0.72);
+  --palette-border-color: rgba(46, 36, 29, 0.08);
+  --palette-entry-color: #4a3626;
+  --palette-entry-hover-color: rgba(154, 75, 40, 0.1);
+  --popup-background-color: rgba(254, 251, 246, 0.94);
+  --popup-border-color: rgba(46, 36, 29, 0.08);
+  --popup-entry-hover-color: rgba(154, 75, 40, 0.1);
+  --context-pad-entry-background-color: transparent;
+  --context-pad-entry-hover-background-color: rgba(154, 75, 40, 0.1);
+  --context-pad-background-color: #fffdfa;
+  --context-pad-border-color: rgba(46, 36, 29, 0.08);
+  --context-pad-shadow:
+    0 10px 28px rgba(46, 36, 29, 0.14), 0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+  --context-pad-divider-color: rgba(46, 36, 29, 0.12);
+  --context-pad-entry-color: #4a3626;
+  --bjsl-fill-color: #fbf7f1;
+  --bjsl-stroke-color: #4a3a2c;
+}
+
+html[data-theme='amber'] .design-header,
+html[data-theme='amber'] .design-inner__header {
+  background: linear-gradient(180deg, #fefbf6 0%, var(--designer-chrome) 100%);
+  border-bottom-color: rgba(46, 36, 29, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+html[data-theme='amber'] .design-header .el-button:not(.design-save),
+html[data-theme='amber'] .design-inner__header .el-button {
+  --el-button-bg-color: rgba(255, 253, 250, 0.88);
+  --el-button-border-color: rgba(46, 36, 29, 0.08);
+  box-shadow: 0 1px 1px rgba(46, 36, 29, 0.04);
+}
+
+html[data-theme='amber'] .design-aside {
+  background: linear-gradient(180deg, #f9f3ea 0%, var(--designer-panel) 140px);
+  border-left-color: rgba(46, 36, 29, 0.08);
+}
+
+html[data-theme='amber'] .design-aside .panel-heading {
+  background: linear-gradient(180deg, rgba(255, 253, 250, 0.7), rgba(255, 253, 250, 0));
+  border-bottom-color: rgba(46, 36, 29, 0.08);
+}
+
+html[data-theme='amber'] .design-aside .el-tabs__header,
+html[data-theme='amber'] .design-aside .el-collapse,
+html[data-theme='amber'] .design-aside .el-collapse-item__header,
+html[data-theme='amber'] .design-aside .el-collapse-item__wrap {
+  background: transparent;
+  border-color: transparent;
+}
+
+html[data-theme='amber'] .design-aside .el-tabs__nav-wrap::after {
+  height: 1px;
+  background: rgba(46, 36, 29, 0.08);
+}
+
+html[data-theme='amber'] .design-aside .el-collapse-item__header {
+  font-weight: 600;
+}
+
+html[data-theme='amber'] .design-aside .el-input__wrapper,
+html[data-theme='amber'] .design-aside .el-select__wrapper,
+html[data-theme='amber'] .design-aside .el-textarea__inner {
+  background: #fffdfa;
+  box-shadow: 0 0 0 1px rgba(154, 75, 40, 0.12);
+}
+
+html[data-theme='amber'] .bjs-container .djs-palette {
+  border-radius: 14px;
+  box-shadow:
+    0 10px 28px rgba(46, 36, 29, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+  backdrop-filter: blur(16px);
+}

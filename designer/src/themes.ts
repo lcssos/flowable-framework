@@ -4,6 +4,7 @@ export const themes = [
   { id: 'ink', dark: false },
   { id: 'classic', dark: false },
   { id: 'dark', dark: true },
+  { id: 'amber', dark: false },
 ] as const
 
 export type ThemeId = (typeof themes)[number]['id']

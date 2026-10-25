@@ -8,6 +8,7 @@ export default {
       ink: 'Ink',
       classic: 'Classic',
       dark: 'Dark',
+      amber: 'Amber',
     },
     labelPositionTop: 'Top labels',
     labelPositionLeft: 'Left labels',

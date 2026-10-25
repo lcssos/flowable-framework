@@ -8,6 +8,7 @@ export default {
       ink: '墨蓝',
       classic: '经典',
       dark: '暗色',
+      amber: '琥珀',
     },
     labelPositionTop: '顶部标签',
     labelPositionLeft: '左侧标签',
