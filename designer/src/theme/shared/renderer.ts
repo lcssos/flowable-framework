@@ -1050,8 +1050,9 @@ export default abstract class ThemeRenderer extends BaseRenderer {
 type InjectablePatch = ((elementFactory: ElementFactoryLike) => void) & { $inject?: string[] }
 
 // 各主题的新建节点尺寸补丁形态一致，只有“当前是否该主题”的判断不同。
+// 注意：返回的必须是普通函数而非箭头函数——didi 对 ['type', fn] 使用 new 实例化。
 export function createTaskSizePatch(isActive: () => boolean) {
-  const patch: InjectablePatch = (elementFactory) => {
+  const patch: InjectablePatch = function patchTaskSize(elementFactory) {
     const getDefaultSize = elementFactory.getDefaultSize.bind(elementFactory)
     elementFactory.getDefaultSize = (semantic, di) => {
       const size = getDefaultSize(semantic, di)
