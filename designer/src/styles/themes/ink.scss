@@ -1,0 +1,39 @@
+html[data-theme='ink'] {
+  --el-color-primary: #1f4b6e;
+  --el-color-primary-light-3: #62809a;
+  --el-color-primary-light-5: #8fa5b7;
+  --el-color-primary-light-7: #bcc9d4;
+  --el-color-primary-light-8: #d2dbe3;
+  --el-color-primary-light-9: #e9eef2;
+  --el-color-primary-dark-2: #193c58;
+  --el-border-radius-base: 6px;
+  --el-bg-color: #ffffff;
+  --el-bg-color-page: #f3f5f7;
+  --el-bg-color-overlay: #ffffff;
+  --el-text-color-primary: #1b2838;
+  --el-text-color-regular: #3d4c5c;
+  --el-text-color-secondary: #6b7c8d;
+  --el-border-color: #d7dee6;
+  --el-border-color-light: #e4eaf0;
+  --el-fill-color-blank: #ffffff;
+  --el-fill-color-light: #f3f5f7;
+  --el-fill-color-lighter: #f7f9fb;
+  --designer-paper: #f3f5f7;
+  --designer-canvas: #ffffff;
+  --designer-save: #c2453d;
+  --designer-save-hover: #a83b34;
+}
+
+html[data-theme='ink'] .djs-parent {
+  --palette-background-color: #ffffff;
+  --palette-border-color: #d7dee6;
+  --palette-entry-color: #1b2838;
+  --palette-entry-hover-color: #e9eef2;
+  --popup-background-color: #ffffff;
+  --popup-border-color: #d7dee6;
+  --popup-entry-hover-color: #e9eef2;
+  --context-pad-entry-background-color: #ffffff;
+  --context-pad-entry-hover-background-color: #e9eef2;
+  --bjsl-fill-color: #ffffff;
+  --bjsl-stroke-color: #1b2838;
+}

@@ -1,0 +1,51 @@
+html[data-theme='dark'] {
+  --el-border-radius-base: 6px;
+  --designer-paper: var(--el-bg-color-page);
+  --designer-canvas: var(--el-bg-color);
+  --designer-save: var(--el-color-primary);
+  --designer-save-hover: var(--el-color-primary-light-3);
+}
+
+html.dark {
+  --codemirror-violet-color: #c678dd;
+  --codemirror-ivory-color: #abb2bf;
+  --codemirror-chalky-color: #e5c07b;
+
+  --token-simulation-silver-darken-94: #909090;
+  --token-simulation-silver-base-97: var(--el-bg-color-overlay);
+
+  .djs-minimap {
+    background-color: var(--el-bg-color);
+  }
+
+  .bjsl-issues {
+    background: var(--el-bg-color);
+    border: var(--el-border);
+  }
+
+  .djs-container {
+    .bjsl-id-hint {
+      background-color: var(--el-color-info-light-8);
+    }
+
+    .djs-direct-editing-parent {
+      background-color: transparent !important;
+    }
+  }
+
+  .djs-parent {
+    --bjsl-fill-color: var(--el-fill-color);
+    --bjsl-stroke-color: var(--el-text-color-regular);
+    --context-pad-entry-background-color: #373739;
+    --context-pad-entry-hover-background-color: var(--el-bg-color);
+    --popup-search-border-color: var(--el-border-color);
+    --popup-search-focus-background-color: var(--el-fill-color-blank);
+    --popup-background-color: var(--el-fill-color);
+    --palette-background-color: var(--el-bg-color);
+    --popup-entry-hover-color: var(--el-fill-color-darker);
+    --palette-entry-color: var(--el-text-color-regular);
+    --shape-drop-allowed-fill-color: var(--el-bg-color);
+    --shape-drop-not-allowed-fill-color: var(--el-bg-color-overlay);
+    --shape-connect-allowed-fill-color: var(--el-bg-color-overlay);
+  }
+}

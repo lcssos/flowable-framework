@@ -37,6 +37,7 @@ import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import useAppStore from '@/stores/modules/app.ts'
+import { isTheme, themes } from '@/themes'
 import {
   deployXml,
   getModel,
@@ -165,7 +166,7 @@ const writeProcessKey = (key: string | null) => {
   currentProcessKey.value = key
 }
 const setTheme = (value: string | number | object) => {
-  if (value === 'ink' || value === 'classic' || value === 'dark') {
+  if (typeof value === 'string' && isTheme(value)) {
     theme.value = value
   }
 }
@@ -359,14 +360,13 @@ defineExpose({
           <el-button>{{ $t('ui.theme') }}</el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="ink" :class="{ 'is-active': theme === 'ink' }">
-                {{ $t('ui.themeInk') }}
-              </el-dropdown-item>
-              <el-dropdown-item command="classic" :class="{ 'is-active': theme === 'classic' }">
-                {{ $t('ui.themeClassic') }}
-              </el-dropdown-item>
-              <el-dropdown-item command="dark" :class="{ 'is-active': theme === 'dark' }">
-                {{ $t('ui.themeDark') }}
+              <el-dropdown-item
+                v-for="item in themes"
+                :key="item.id"
+                :command="item.id"
+                :class="{ 'is-active': theme === item.id }"
+              >
+                {{ $t(`ui.themes.${item.id}`) }}
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>

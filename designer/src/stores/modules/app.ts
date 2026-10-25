@@ -1,18 +1,15 @@
 import { defineStore } from 'pinia'
 import { useNavigatorLanguage } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
+import { isTheme, themeUsesDark, type ThemeId } from '@/themes'
 
 export type LanguageType = 'zh-CN' | 'en-US'
-export type ThemeType = 'ink' | 'classic' | 'dark'
-
-const isTheme = (value: string): value is ThemeType => {
-  return value === 'ink' || value === 'classic' || value === 'dark'
-}
+export type ThemeType = ThemeId
 
 const applyTheme = (value: ThemeType) => {
   const root = document.documentElement
   root.dataset.theme = value
-  root.classList.toggle('dark', value === 'dark')
+  root.classList.toggle('dark', themeUsesDark(value))
 }
 
 const useAppStore = defineStore(

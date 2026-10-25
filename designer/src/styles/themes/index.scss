@@ -1,0 +1,4 @@
+// 每个主题单独一个文件。新增主题时在这里 @use，并在 src/themes.ts 登记。
+@use 'ink';
+@use 'classic';
+@use 'dark';
