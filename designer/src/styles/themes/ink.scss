@@ -24,8 +24,8 @@ html[data-theme='ink'] {
   --designer-chrome-fill: linear-gradient(180deg, #fbfcfd 0%, #e8edf2 100%);
   --designer-panel: #e3e8ee;
   --designer-panel-fill: linear-gradient(180deg, #f4f6f9 0%, #e3e8ee 180px);
-  --designer-save: #c2453d;
-  --designer-save-hover: #a83b34;
+  --designer-save: var(--el-color-primary);
+  --designer-save-hover: var(--el-color-primary-dark-2);
 }
 
 html[data-theme='ink'] .djs-parent {
