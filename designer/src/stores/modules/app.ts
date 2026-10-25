@@ -10,6 +10,7 @@ const applyTheme = (value: ThemeType) => {
   const root = document.documentElement
   root.dataset.theme = value
   root.classList.toggle('dark', themeUsesDark(value))
+  window.dispatchEvent(new CustomEvent('designer-theme'))
 }
 
 const useAppStore = defineStore(
