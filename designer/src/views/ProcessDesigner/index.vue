@@ -51,6 +51,7 @@ defineOptions({
   name: 'ProcessDesigner',
 })
 const { language } = storeToRefs(useAppStore())
+const processKeyParam = 'key'
 const { t } = useI18n()
 const props = defineProps<{
   id?: string
@@ -146,12 +147,70 @@ const ensureLogin = async () => {
   loginVisible.value = true
   return false
 }
+const showError = (error: unknown) => {
+  ElMessage.error(error instanceof Error ? error.message : String(error))
+}
+const importDiagram = async (xml: string) => {
+  modeler.value?.get<CommandStack>('commandStack').clear()
+  await modeler.value?.importXML(xml)
+  modeler.value?.get<Canvas>('canvas')?.zoom('fit-viewport')
+}
+const processKeyFromUrl = () => {
+  return new URLSearchParams(window.location.search).get(processKeyParam) || null
+}
+const writeProcessKey = (key: string | null) => {
+  const url = new URL(window.location.href)
+  if (key) {
+    url.searchParams.set(processKeyParam, key)
+  } else {
+    url.searchParams.delete(processKeyParam)
+  }
+  const next = `${url.pathname}${url.search}${url.hash}`
+  window.history.replaceState(window.history.state, '', next)
+}
+const showNewProcess = async () => {
+  const xml = EmptyXML(props.id || nextId('Process_'), props.name || t('ui.newProcess'))
+  await importDiagram(props.xml || xml)
+}
+const openModel = async (key: string) => {
+  const model = await getModel(key)
+  await importDiagram(await xmlWithDiagram(model.xml))
+  writeProcessKey(key)
+}
+const restoreOpenedProcess = async () => {
+  if (props.xml) {
+    await importDiagram(props.xml)
+    return
+  }
+  const key = processKeyFromUrl()
+  if (!key || !(await ensureLogin())) {
+    await showNewProcess()
+    return
+  }
+  try {
+    await openModel(key)
+  } catch (error) {
+    writeProcessKey(null)
+    await showNewProcess()
+    showError(error)
+  }
+}
 const submitLogin = async () => {
   try {
     await login(loginUsername.value, loginPassword.value)
     loginVisible.value = false
+    const key = processKeyFromUrl()
+    if (!key) {
+      return
+    }
+    try {
+      await openModel(key)
+    } catch (error) {
+      writeProcessKey(null)
+      showError(error)
+    }
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : String(error))
+    showError(error)
   }
 }
 const openDefinitions = async () => {
@@ -162,17 +221,15 @@ const openDefinitions = async () => {
     definitions.value = await listDefinitions()
     openVisible.value = true
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : String(error))
+    showError(error)
   }
 }
 const openDefinition = async (key: string) => {
   try {
-    const model = await getModel(key)
-    await modeler.value?.importXML(await xmlWithDiagram(model.xml))
-    modeler.value?.get<Canvas>('canvas')?.zoom('fit-viewport')
+    await openModel(key)
     openVisible.value = false
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : String(error))
+    showError(error)
   }
 }
 const save = async () => {
@@ -185,9 +242,10 @@ const save = async () => {
   }
   try {
     const saved = await deployXml(xml)
+    writeProcessKey(saved.key)
     ElMessage.success(`${t('ui.saved')} ${saved.key} v${saved.version}`)
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : String(error))
+    showError(error)
   }
 }
 onMounted(() => {
@@ -207,10 +265,8 @@ const layout = async () => {
   }
 }
 const restart = () => {
-  modeler.value?.get<CommandStack>('commandStack').clear()
-  const xml = EmptyXML(props.id || nextId('Process_'), props.name || t('ui.newProcess'))
-  modeler.value?.importXML(props.xml || xml)
-  modeler.value?.get<Canvas>('canvas')?.zoom('fit-viewport')
+  writeProcessKey(null)
+  void showNewProcess()
 }
 const loadXml = (xml: string) => {
   modeler.value?.importXML(xml)
@@ -225,7 +281,7 @@ const modelerReady = async (bpmnModeler: BpmnModeler) => {
   modeler.value?.on<{ issues: Issues }>('linting.completed', ({ issues }) => {
     issuesList.value = Object.values(issues).flat()
   })
-  restart()
+  await restoreOpenedProcess()
   // await bpmnModeler.createDiagram()
 }
 const validate = async () => {
