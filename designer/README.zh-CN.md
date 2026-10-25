@@ -62,7 +62,8 @@ pnpm install
 ## 🚀 运行与构建
 
 ```bash
-# 启动本地开发服务器（默认端口等配置在 vite.config.ts）
+# 启动本地开发服务器：http://localhost:5173
+# /api 会代理到后端 http://localhost:8080（先启动 Spring Boot）
 pnpm dev
 
 # 开发环境构建

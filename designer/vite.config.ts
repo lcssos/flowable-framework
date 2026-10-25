@@ -52,6 +52,17 @@ export default defineConfig({
       scss: { api: 'modern-compiler' },
     },
   },
+  // 本地调试时前端单独起服务；页面请求 /api 时由开发服务器转发到 Spring Boot。
+  server: {
+    port: 5173,
+    strictPort: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+    },
+  },
   build: {
     outDir: '../src/main/resources/static',
     emptyOutDir: true,

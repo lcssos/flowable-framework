@@ -63,7 +63,8 @@ pnpm install
 ## 🚀 Scripts
 
 ```bash
-# run dev server (port/options are in vite.config.ts)
+# run the dev server at http://localhost:5173
+# /api is proxied to the backend at http://localhost:8080 (start Spring Boot first)
 pnpm dev
 
 # build for development

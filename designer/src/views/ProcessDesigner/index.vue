@@ -33,6 +33,7 @@ import type { ElementIssue, Issues, Linting } from 'bpmn-js-bpmnlint'
 import type Canvas from 'diagram-js/lib/core/Canvas'
 import type { Minimap } from 'diagram-js-minimap'
 import { layoutProcess } from 'bpmn-auto-layout'
+import { xmlWithDiagram } from './utils/diagramLayout'
 import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
@@ -167,7 +168,7 @@ const openDefinitions = async () => {
 const openDefinition = async (key: string) => {
   try {
     const model = await getModel(key)
-    await modeler.value?.importXML(model.xml)
+    await modeler.value?.importXML(await xmlWithDiagram(model.xml))
     modeler.value?.get<Canvas>('canvas')?.zoom('fit-viewport')
     openVisible.value = false
   } catch (error) {
