@@ -15,8 +15,11 @@ import {
   CaretLeft,
   CaretRight,
   CircleCheck,
+  Delete,
   FolderOpened,
   MapLocation,
+  RefreshLeft,
+  RefreshRight,
   Upload,
   VideoPlay,
   ZoomIn,
@@ -458,14 +461,18 @@ defineExpose({
           <el-space :size="10">
             <el-button-group size="small">
               <el-tooltip placement="top" :content="$t('ui.undo')">
-                <el-button class="design-tool design-tool--undo" @click="undo">
-                  <iconify icon="ic:baseline-undo" :size="3" />
-                </el-button>
+                <el-button
+                  class="design-tool design-tool--undo"
+                  :icon="RefreshLeft"
+                  @click="undo"
+                />
               </el-tooltip>
               <el-tooltip placement="top" :content="$t('ui.redo')">
-                <el-button class="design-tool design-tool--redo" @click="redo">
-                  <iconify icon="ic:baseline-redo" :size="3" />
-                </el-button>
+                <el-button
+                  class="design-tool design-tool--redo"
+                  :icon="RefreshRight"
+                  @click="redo"
+                />
               </el-tooltip>
             </el-button-group>
             <el-button-group size="small">
@@ -493,9 +500,7 @@ defineExpose({
             </el-button-group>
             <el-button-group size="small">
               <el-tooltip placement="top" :content="$t('ui.reset')">
-                <el-button class="design-tool design-tool--reset" @click="restart">
-                  <iconify icon="solar:eraser-outline" :size="3" />
-                </el-button>
+                <el-button class="design-tool design-tool--reset" :icon="Delete" @click="restart" />
               </el-tooltip>
               <el-tooltip
                 placement="top"
