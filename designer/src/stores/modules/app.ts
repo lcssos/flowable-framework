@@ -3,8 +3,19 @@ import { useNavigatorLanguage } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { isTheme, themeUsesDark, type ThemeId } from '@/themes'
 
-export type LanguageType = 'zh-CN' | 'en-US'
+export type LanguageType = 'zh-CN' | 'en-US' | 'ja-JP'
 export type ThemeType = ThemeId
+
+export const isLanguage = (value: string): value is LanguageType =>
+  value === 'zh-CN' || value === 'en-US' || value === 'ja-JP'
+
+// 浏览器语言只用来决定首次进入的默认语言：日文 → 日文，中文 → 中文，其余回落英文。
+const detectLanguage = (value?: string): LanguageType => {
+  const tag = (value ?? '').toLowerCase()
+  if (tag.startsWith('ja')) return 'ja-JP'
+  if (tag.startsWith('zh')) return 'zh-CN'
+  return 'en-US'
+}
 
 const applyTheme = (value: ThemeType) => {
   const root = document.documentElement
@@ -18,9 +29,7 @@ const useAppStore = defineStore(
   () => {
     const i18n = useI18n()
     const { language: navigatorLanguage } = useNavigatorLanguage()
-    const language = shallowRef<LanguageType>(
-      navigatorLanguage.value?.toLowerCase().startsWith('zh') ? 'zh-CN' : 'en-US',
-    )
+    const language = shallowRef<LanguageType>(detectLanguage(navigatorLanguage.value))
     const theme = ref<ThemeType>('ink')
     const changeLanguage = (lang: LanguageType) => {
       language.value = lang

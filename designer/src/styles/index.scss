@@ -287,7 +287,8 @@ th.el-table__cell {
   --codemirror-chalky-color: #164;
 }
 
-.theme-menu .el-dropdown-menu__item.is-active {
+.theme-menu .el-dropdown-menu__item.is-active,
+.language-menu .el-dropdown-menu__item.is-active {
   color: var(--el-color-primary);
   font-weight: 600;
 }

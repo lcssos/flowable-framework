@@ -36,7 +36,7 @@ import { xmlWithDiagram } from './utils/diagramLayout'
 import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
-import useAppStore from '@/stores/modules/app.ts'
+import useAppStore, { isLanguage } from '@/stores/modules/app.ts'
 import { isTheme, themes } from '@/themes'
 import {
   bindPaletteTips,
@@ -56,7 +56,25 @@ import {
 defineOptions({
   name: 'ProcessDesigner',
 })
-const { language, theme } = storeToRefs(useAppStore())
+const appStore = useAppStore()
+const { language, theme } = storeToRefs(appStore)
+
+// 语言名用各自母语书写，避免切换后再去翻译语言本身。
+const languageOptions = [
+  { value: 'zh-CN', label: '简体中文' },
+  { value: 'en-US', label: 'English' },
+  { value: 'ja-JP', label: '日本語' },
+] as const
+
+const currentLanguageLabel = computed(
+  () => languageOptions.find((item) => item.value === language.value)?.label ?? '',
+)
+
+const changeLanguage = (value: string | number | object) => {
+  if (typeof value === 'string' && isLanguage(value)) {
+    appStore.changeLanguage(value)
+  }
+}
 const processKeyParam = 'key'
 const { t, locale } = useI18n()
 const props = defineProps<{
@@ -415,15 +433,23 @@ defineExpose({
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-        <el-switch
-          v-model="language"
-          inline-prompt
-          :active-text="$tu('中')"
-          inactive-text="EN"
-          active-value="zh-CN"
-          inactive-value="en-US"
-          :aria-label="$t('ui.switchLanguage')"
-        />
+        <el-dropdown trigger="click" popper-class="language-menu" @command="changeLanguage">
+          <el-button class="design-action design-action--language" :aria-label="$t('ui.switchLanguage')">
+            {{ currentLanguageLabel }}
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item
+                v-for="item in languageOptions"
+                :key="item.value"
+                :command="item.value"
+                :class="{ 'is-active': language === item.value }"
+              >
+                {{ item.label }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
     </el-header>
     <el-container style="overflow-y: auto">

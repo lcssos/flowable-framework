@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import en from 'element-plus/es/locale/lang/en'
+import ja from 'element-plus/es/locale/lang/ja'
 import { storeToRefs } from 'pinia'
 import ProcessDesigner from '@/views/ProcessDesigner/index.vue'
 import type { Language } from 'element-plus/es/locale'
@@ -10,6 +11,7 @@ const { language } = storeToRefs(useAppStore())
 const languages: Record<LanguageType, Language> = {
   'zh-CN': zhCn,
   'en-US': en,
+  'ja-JP': ja,
 }
 </script>
 
