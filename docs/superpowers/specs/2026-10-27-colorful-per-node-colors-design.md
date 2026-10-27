@@ -1,7 +1,7 @@
 # 多彩主题：节点按实例取色
 
 Date: 2026-10-27
-Status: 待确认
+Status: 已实现（2026-10-28）
 
 ## 意图
 
@@ -36,17 +36,19 @@ Status: 待确认
 1. 新增 `designer/src/theme/colorful/node-paints.ts`
    - `NODE_PAINTS: NodePaint[]`：从现有 `TASK_PAINTS` / `EVENT_HUES` / `GATEWAY_PAINTS` 中挑选并去重，固定 12 组已调好的 fill / edge / icon 配色，保持色板原有的明度与对比度。
    - `paintIndex(id)`：FNV-1a 哈希后对色板长度取模，保证同一 id 永远落到同一组。
-   - `pickNodePaint(element, painted)`：先取哈希色；若与「直接相连且已经绘制」的邻居同色，则顺延到下一组，直到不冲突或回绕一圈。
+   - `pickNodePaint(element, painted)`：先取哈希色；若与「已分配颜色的邻居」同色，则顺延到下一组，直到不冲突或回绕一圈。邻居包含连线两端与 `host` / `attachers`（边界事件贴附在宿主上，同色会像长在一起）。
 2. 修改 `designer/src/theme/colorful/renderer.ts`
-   - `shapePaint` 统一走 `pickNodePaint`，任务、事件、网关不再分别查类型表。
-   - 渲染器实例内维护 `Map<element.id, NodePaint>` 记录已分配的颜色；监听 `import.done` 清空，保证同一张图内避让结果稳定，拖动重绘不变色。
+   - 删除按类型取色的 `shapePaint`，`drawShape` 直接按节点 id 查缓存颜色。
+   - 绘制阶段的颜色只是临时值：导入完成后按完整图（此时连线已建立）重新分配，并只重绘颜色发生变化的节点。
+   - 分配规则由 `assignPaints` 承担：按 id 排序依次取色，后分配的一端必然避开已分配的邻居，因此同一份 XML 每次打开结果一致，与绘制顺序无关。
+   - 缓存随元素删除清理；拖动、改属性触发的重绘命中缓存，不会换色。
 3. 清理 `colorful/tokens.ts` 中不再使用的 `TASK_PAINTS`、`EVENT_HUES`、`GATEWAY_PAINTS`、`blendHex`，避免留下死代码；`COLORFUL` 仍作为兜底调色板保留。
 4. 连线颜色 `FLOW_COLORS` 保持不变。
 
 ## 我的判断（可以推翻）
 
 - 事件原先靠起始/中间/结束的明暗区分，统一取色后这层区分消失；若实际观感太乱，再单独为事件保留明暗档。
-- 避让只对直接连线的节点生效；没有连线但视觉上相邻的节点仍可能同色。
+- 避让只对连线两端与贴附关系（host / attachers）生效；没有连线但视觉上相邻的节点仍可能同色。
 - 颜色跟着 `element.id` 走，复制粘贴出来的节点 id 不同，因此会得到不同颜色，符合预期。
 
 ## 验证

@@ -25,7 +25,7 @@
 - **色板回绕**：避让顺延必须对色板长度取模，不能越界或死循环。
 - **重新导入**：保存后刷新、切换主题再切回，颜色必须一致；`import.done` 必须清空缓存。
 - **无连线节点**：没有 incoming/outgoing 时避让要安全跳过，不能报错。
-- **非 shape 元素**：`shapePaint` 仍只应处理形状，连线走原有 `flowColor`，不能被新逻辑影响。
+- **非 shape 元素**：形状取色只应在 `drawShape` 里发生，连线走原有 `flowColor`，不能被新逻辑影响。
 
 ---
 
@@ -41,6 +41,7 @@
   - `NODE_PAINTS: NodePaint[]`（12 组）
   - `paintIndex(id: string): number`
   - `pickNodePaint(element: Element, painted: Map<string, NodePaint>): NodePaint`
+  - `assignPaints(shapes: Element[]): Map<string, NodePaint>`（按 id 排序后统一分配）
 
 - [ ] **Step 1: 创建 `node-paints.ts`，定义 12 组色板**
 
@@ -65,16 +66,17 @@ export const NODE_PAINTS: NodePaint[] = [
 
 - [ ] **Step 2: 实现 `paintIndex`**
 
-FNV-1a 32 位哈希后对 `NODE_PAINTS.length` 取模；输入为空字符串时也返回 0 而不是 NaN。
+FNV-1a 32 位哈希后对 `NODE_PAINTS.length` 取模；输入为空字符串时返回落在色板范围内的有效索引（不返回 NaN 或越界值）。
 
 - [ ] **Step 3: 实现 `pickNodePaint`**
 
 签名如上，行为：
 
 1. 以 `paintIndex(element.id)` 作为起点。
-2. 收集直接相连且已绘制的邻居：`element.incoming` 的 `source`、`element.outgoing` 的 `target`，从 `painted` 里取颜色。
+2. 收集已分配的邻居：连线两端（`element.incoming` 的 `source`、`element.outgoing` 的 `target`），以及贴附关系（`host`、`attachers`，边界事件与宿主同色会像长在一起），从 `painted` 里取颜色。
 3. 若候选色与任一邻居同色，`index = (index + 1) % NODE_PAINTS.length`，最多顺延一整圈。
 4. 返回最终色。
+5. 另导出 `assignPaints(shapes)`：按 id 排序后依次取色，后分配的一端必然避开已分配的一端，用于导入完成后按完整图重算（导入时形状先画、连线后建，绘制阶段拿不到邻居）。
 
 - [ ] **Step 4: 验证类型**
 
@@ -90,15 +92,15 @@ Expected: 不出现 `node-paints.ts` 相关错误（仍允许既有的 5 个 `Pa
 - Modify: `designer/src/theme/colorful/tokens.ts`
 
 **Interfaces:**
-- Consumes: Task 1 的 `pickNodePaint`、`NodePaint`
+- Consumes: Task 1 的 `pickNodePaint`、`assignPaints`、`NodePaint`
 - Produces: 无新导出；`ColorfulRenderer` 行为变化
 
 - [ ] **Step 1: `renderer.ts` 接入实例取色**
 
-- 删除 `taskPaint`、`eventPaint`、`gatewayPaint` 三个按类型取色的函数，`shapePaint` 改为调用 `pickNodePaint`。
+- 删除 `taskPaint`、`eventPaint`、`gatewayPaint` 三个按类型取色的函数，形状颜色统一走 `paintFor`。
 - 在 `ColorfulRenderer` 内新增 `private readonly nodePaints = new Map<string, NodePaint>()`。
-- 新增私有方法 `paintFor(element: Element): NodePaint`：缓存命中直接返回；否则调用 `pickNodePaint(element, this.nodePaints)`、写入缓存并返回。
-- 构造函数里监听 `import.done` 清空 `nodePaints`。
+- 新增私有方法 `paintFor(element: Element): NodePaint`：缓存命中直接返回；否则调用 `pickNodePaint(element, this.nodePaints)`、写入缓存并返回（绘制阶段拿不到邻居，先取临时色）。
+- 构造函数里监听 `import.done` 调用 `reassignPaints()`：用 `assignPaints` 按完整图重算，只重绘颜色发生变化的节点；监听 `elements.delete` 清理缓存。
 - `drawShape` 改用 `this.paintFor(element)`。
 
 - [ ] **Step 2: 清理 `tokens.ts` 中不再使用的导出**

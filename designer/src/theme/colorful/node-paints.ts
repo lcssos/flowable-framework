@@ -29,20 +29,31 @@ export const paintIndex = (id: string) => {
   return (hash >>> 0) % NODE_PAINTS.length
 }
 
+// 邻居既包括连线两端，也包括贴附关系：边界事件画在宿主上方，同色会像长在一起。
 const neighborPaintsOf = (element: Element, painted: Map<string, NodePaint>) => {
-  const connections = [...(element.incoming ?? []), ...(element.outgoing ?? [])]
   const paints = new Set<NodePaint>()
-  for (const connection of connections) {
-    const neighbor = connection.source?.id === element.id ? connection.target : connection.source
+  const add = (neighbor?: { id: string }) => {
     const paint = neighbor ? painted.get(neighbor.id) : undefined
     if (paint) {
       paints.add(paint)
     }
   }
+  for (const connection of [...(element.incoming ?? []), ...(element.outgoing ?? [])]) {
+    add(connection.source?.id === element.id ? connection.target : connection.source)
+  }
+  const attached = element as Element & {
+    host?: { id: string }
+    attachers?: { id: string }[]
+  }
+  add(attached.host)
+  for (const attacher of attached.attachers ?? []) {
+    add(attacher)
+  }
   return paints
 }
 
-// 只避让直接连线的节点；绘制顺序决定谁先占色，因此结果在同一份 XML 下稳定。
+// 绘制阶段的临时取色：此时连线可能尚未创建，只按已缓存邻居避让。
+// 最终颜色由 assignPaints 在导入完成后按完整图重算，因此结果与绘制顺序无关。
 export const pickNodePaint = (element: Element, painted: Map<string, NodePaint>): NodePaint => {
   const start = paintIndex(element.id)
   const taken = neighborPaintsOf(element, painted)
@@ -52,5 +63,16 @@ export const pickNodePaint = (element: Element, painted: Map<string, NodePaint>)
       return paint
     }
   }
-  return NODE_PAINTS[start]
+  return NODE_PAINTS[start] ?? NODE_PAINTS[0]
+}
+
+// 导入时连线在所有形状之后才创建，逐个绘制拿不到邻居。这里按 id 排序后统一分配：
+// 后分配的一端必然避开先分配的一端，因此每条边两端不同色，且结果只由图决定。
+export const assignPaints = (shapes: Element[]): Map<string, NodePaint> => {
+  const painted = new Map<string, NodePaint>()
+  const ordered = [...shapes].sort((left, right) => left.id.localeCompare(right.id))
+  for (const shape of ordered) {
+    painted.set(shape.id, pickNodePaint(shape, painted))
+  }
+  return painted
 }

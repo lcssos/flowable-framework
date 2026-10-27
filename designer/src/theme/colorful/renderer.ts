@@ -10,7 +10,7 @@ import ThemeRenderer, {
 import { withPalette, type ThemePalette } from '@/theme/shared/palette'
 import { installThemeIcons } from '@/theme/shared/icons'
 import { COLORFUL, COLORFUL_ID, FLOW_COLORS, isColorfulTheme, type NodePaint } from './tokens'
-import { pickNodePaint } from './node-paints'
+import { assignPaints, pickNodePaint } from './node-paints'
 
 type PalettePatch = Partial<ThemePalette>
 
@@ -51,6 +51,8 @@ export default class ColorfulRenderer extends ThemeRenderer {
 
   // 已分配的颜色按 id 缓存：拖动、改属性触发的重绘不会让节点换色。
   private readonly nodePaints = new Map<string, NodePaint>()
+  private readonly elementRegistry: RegistryLike
+  private readonly graphicsFactory: FactoryLike
 
   constructor(
     eventBus: EventBus,
@@ -59,9 +61,41 @@ export default class ColorfulRenderer extends ThemeRenderer {
     graphicsFactory: FactoryLike,
   ) {
     super(eventBus, textRenderer, elementRegistry, graphicsFactory)
+    this.elementRegistry = elementRegistry
+    this.graphicsFactory = graphicsFactory
     installThemeIcons(COLORFUL_ID)
-    // 重新导入后清空缓存，让连线避让按新图的绘制顺序重新计算。
-    eventBus.on('import.done', () => this.nodePaints.clear())
+    // 导入时形状先画、连线后建，绘制阶段拿不到邻居；导入完成后按完整图重算一次，
+    // 只重绘颜色真正变化的节点，保证同一份 XML 每次打开都是同一套颜色。
+    eventBus.on('import.done', () => this.reassignPaints())
+    // 删除节点后同步清理缓存，避免同 id 的新元素继承旧色。
+    eventBus.on('elements.delete', (event: { elements?: Element[] }) => {
+      for (const element of event.elements ?? []) {
+        this.nodePaints.delete(element.id)
+      }
+    })
+  }
+
+  private reassignPaints() {
+    const shapes: Element[] = []
+    this.elementRegistry.forEach((element) => {
+      const label = (element as Element & { labelTarget?: Element }).labelTarget
+      if (element.parent && !label && !('waypoints' in element)) {
+        shapes.push(element)
+      }
+    })
+    const byId = new Map(shapes.map((element) => [element.id, element]))
+    for (const [id, paint] of assignPaints(shapes)) {
+      const previous = this.nodePaints.get(id)
+      this.nodePaints.set(id, paint)
+      if (previous === paint) {
+        continue
+      }
+      const element = byId.get(id)
+      const gfx = element && this.elementRegistry.getGraphics(element)
+      if (element && gfx) {
+        this.graphicsFactory.update('shape', element, gfx)
+      }
+    }
   }
 
   private paintFor(element: Element): NodePaint {
