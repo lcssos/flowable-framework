@@ -1,5 +1,5 @@
 import type EventBus from 'diagram-js/lib/core/EventBus'
-import { getBusinessObject, is, isAny } from 'bpmn-js/lib/util/ModelUtil'
+import { getBusinessObject, is } from 'bpmn-js/lib/util/ModelUtil'
 import type { Connection, Element, Shape } from 'bpmn-js/lib/model/Types'
 import ThemeRenderer, {
   createTaskSizePatch,
@@ -9,73 +9,13 @@ import ThemeRenderer, {
 } from '@/theme/shared/renderer'
 import { withPalette, type ThemePalette } from '@/theme/shared/palette'
 import { installThemeIcons } from '@/theme/shared/icons'
-import {
-  COLORFUL,
-  COLORFUL_ID,
-  EVENT_HUES,
-  FLOW_COLORS,
-  GATEWAY_PAINTS,
-  TASK_PAINTS,
-  blendHex,
-  isColorfulTheme,
-  type NodePaint,
-} from './tokens'
+import { COLORFUL, COLORFUL_ID, FLOW_COLORS, isColorfulTheme, type NodePaint } from './tokens'
+import { pickNodePaint } from './node-paints'
 
 type PalettePatch = Partial<ThemePalette>
 
-// 事件调色板按定义类型分色；同一类型下起始/中间/结束再做明暗区分，避免三者同色。
-const eventKind = (element: Element) => {
-  const definitions = getBusinessObject(element).eventDefinitions as
-    | { $type?: string }[]
-    | undefined
-  const type = definitions?.[0]?.$type || ''
-  if (type.includes('Message')) return 'message'
-  if (type.includes('Timer')) return 'timer'
-  if (type.includes('Conditional')) return 'conditional'
-  if (type.includes('Signal')) return 'signal'
-  if (type.includes('Error')) return 'error'
-  if (type.includes('Escalation')) return 'escalation'
-  if (type.includes('Link')) return 'link'
-  if (type.includes('Compensate')) return 'compensation'
-  if (type.includes('Cancel')) return 'cancel'
-  if (type.includes('Terminate')) return 'terminate'
-  if (type.includes('VariableListener')) return 'variable'
-  if (type.includes('Parallel')) return 'parallel'
-  if (type.includes('Multiple')) return 'multiple'
-  return 'none'
-}
-
-const taskPaint = (element: Element): NodePaint => {
-  return TASK_PAINTS.find((item) => is(element, item.type)) ?? TASK_PAINTS[TASK_PAINTS.length - 1]
-}
-
-const eventPaint = (element: Element): NodePaint => {
-  const hue = EVENT_HUES[eventKind(element)] ?? EVENT_HUES.none
-  if (is(element, 'bpmn:StartEvent')) {
-    return { fill: blendHex(hue.fill, '#FFFFFF', 0.34), edge: hue.edge }
-  }
-  if (is(element, 'bpmn:EndEvent')) {
-    return { fill: blendHex(hue.fill, hue.edge, 0.28), edge: hue.edge }
-  }
-  return hue
-}
-
-const gatewayPaint = (element: Element): NodePaint => {
-  return GATEWAY_PAINTS[element.type || ''] ?? GATEWAY_PAINTS['bpmn:ExclusiveGateway']
-}
-
-const shapePaint = (element: Element): NodePaint => {
-  if (isAny(element, ['bpmn:Task', 'bpmn:CallActivity'])) {
-    return taskPaint(element)
-  }
-  if (is(element, 'bpmn:Gateway')) {
-    return gatewayPaint(element)
-  }
-  return eventPaint(element)
-}
-
 // 公共渲染器对任务/事件/网关分别读取不同的键，这里把同一色值写入全部相关键，
-// 使任一分支取色都得到该元素的语义色。
+// 使任一分支取色都得到该元素的实例色。
 const toPatch = (paint: NodePaint): PalettePatch => ({
   taskFill: paint.fill,
   userFill: paint.fill,
@@ -109,6 +49,9 @@ export default class ColorfulRenderer extends ThemeRenderer {
 
   protected readonly themeId = COLORFUL_ID
 
+  // 已分配的颜色按 id 缓存：拖动、改属性触发的重绘不会让节点换色。
+  private readonly nodePaints = new Map<string, NodePaint>()
+
   constructor(
     eventBus: EventBus,
     textRenderer: TextRendererLike,
@@ -117,10 +60,22 @@ export default class ColorfulRenderer extends ThemeRenderer {
   ) {
     super(eventBus, textRenderer, elementRegistry, graphicsFactory)
     installThemeIcons(COLORFUL_ID)
+    // 重新导入后清空缓存，让连线避让按新图的绘制顺序重新计算。
+    eventBus.on('import.done', () => this.nodePaints.clear())
+  }
+
+  private paintFor(element: Element): NodePaint {
+    const cached = this.nodePaints.get(element.id)
+    if (cached) {
+      return cached
+    }
+    const paint = pickNodePaint(element, this.nodePaints)
+    this.nodePaints.set(element.id, paint)
+    return paint
   }
 
   drawShape(parent: SVGElement, element: Shape) {
-    const patch = { ...COLORFUL, ...toPatch(shapePaint(element)) }
+    const patch = { ...COLORFUL, ...toPatch(this.paintFor(element)) }
     return withPalette(patch, () => super.drawShape(parent, element))
   }
 
