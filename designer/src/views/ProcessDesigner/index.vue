@@ -26,6 +26,8 @@ import {
   ZoomOut,
 } from '@element-plus/icons-vue'
 import type CommandStack from 'diagram-js/lib/command/CommandStack'
+import type ContextPad from 'diagram-js/lib/features/context-pad/ContextPad'
+import type Selection from 'diagram-js/lib/features/selection/Selection'
 import BpmnPanel from './BpmnPanel.vue'
 import BpmnDesigner from './BpmnModeler.tsx'
 import EmptyXML from './EmptyXML'
@@ -46,6 +48,7 @@ import {
   refreshPaletteTips,
   type PaletteEntriesSource,
 } from './Palette/paletteTips'
+import { bindContextPadTips } from './ContextPad/contextPadTips'
 import { customTranslate } from './Translate'
 import {
   deployXml,
@@ -288,6 +291,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   unbindPaletteTips?.()
+  unbindContextPadTips?.()
 })
 const redo = () => {
   modeler.value?.get<CommandStack>('commandStack').redo()
@@ -314,9 +318,12 @@ const getXml = async () => {
   return res?.xml
 }
 let unbindPaletteTips: (() => void) | undefined
+let unbindContextPadTips: (() => void) | undefined
 const modelerReady = async (bpmnModeler: BpmnModeler) => {
   unbindPaletteTips?.()
+  unbindContextPadTips?.()
   unbindPaletteTips = bindPaletteTips(bpmnModeler)
+  unbindContextPadTips = bindContextPadTips(bpmnModeler)
   modeler.value = bpmnModeler
   injector.value = bpmnModeler.get<Injector>('injector')
   modeler.value?.on<{ issues: Issues }>('linting.completed', ({ issues }) => {
@@ -340,6 +347,14 @@ const refreshBpmnText = () => {
   }
 
   currentInjector.get<Linting>('linting', false)?.update()
+
+  // 操作小按钮浮框的条目在打开时翻译，已经打开的浮框要重新生成才会换语言
+  const contextPad = currentInjector.get<ContextPad>('contextPad', false)
+  const selected = currentInjector.get<Selection>('selection', false)?.get() ?? []
+  const padTarget = selected.length === 1 ? selected[0] : selected
+  if (contextPad && selected.length && contextPad.isOpen(padTarget)) {
+    contextPad.open(padTarget, true)
+  }
 
   // update() 只重算校验结果与按钮文案，不会重建按钮，title 仍是初始语言
   const lintButton = document.querySelector<HTMLButtonElement>('.bjs-container .bjsl-button')

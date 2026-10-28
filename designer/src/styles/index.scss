@@ -204,6 +204,27 @@ th.el-table__cell {
   opacity: 1;
 }
 
+// 操作小按钮浮框的提示：显示在按钮正上方，样式与 palette-tip 保持一致。
+.context-pad-tip {
+  position: fixed;
+  z-index: 3000;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--el-text-color-primary);
+  color: var(--el-bg-color);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -100%);
+  transition: opacity 0.12s ease;
+}
+
+.context-pad-tip.is-visible {
+  opacity: 1;
+}
+
 .djs-parent {
   --bjsl-fill-color: #fff;
   --bjsl-stroke-color: #000;
