@@ -1,5 +1,5 @@
 import type EventBus from 'diagram-js/lib/core/EventBus'
-import { getBusinessObject, is } from 'bpmn-js/lib/util/ModelUtil'
+import { is } from 'bpmn-js/lib/util/ModelUtil'
 import type { Connection, Element, Shape } from 'bpmn-js/lib/model/Types'
 import ThemeRenderer, {
   createTaskSizePatch,
@@ -10,7 +10,7 @@ import ThemeRenderer, {
 import { withPalette, type ThemePalette } from '@/theme/shared/palette'
 import { installThemeIcons } from '@/theme/shared/icons'
 import { COLORFUL, COLORFUL_ID, FLOW_COLORS, isColorfulTheme, type NodePaint } from './tokens'
-import { assignPaints, pickNodePaint } from './node-paints'
+import { assignFlowPaints, assignPaints, pickFlowPaint, pickNodePaint } from './node-paints'
 
 type PalettePatch = Partial<ThemePalette>
 
@@ -29,20 +29,10 @@ const toPatch = (paint: NodePaint): PalettePatch => ({
   endStroke: paint.edge,
 })
 
-const flowColor = (element: Connection) => {
-  if (is(element, 'bpmn:MessageFlow')) {
-    return FLOW_COLORS.message
-  }
-  const business = getBusinessObject(element)
-  const source = element.source && getBusinessObject(element.source)
-  if (source?.default && source.default === business) {
-    return FLOW_COLORS.default
-  }
-  if (business.conditionExpression) {
-    return FLOW_COLORS.conditional
-  }
-  return FLOW_COLORS.sequence
-}
+// 顺序流按实例取色（见 flowPaintFor），其余连线（消息流、关联）保持固定语义色。
+// 条件流、默认流靠起点的菱形/斜线标记区分，不再依赖颜色。
+const fixedFlowColor = (element: Connection) =>
+  is(element, 'bpmn:MessageFlow') ? FLOW_COLORS.message : FLOW_COLORS.sequence
 
 export default class ColorfulRenderer extends ThemeRenderer {
   static $inject = ['eventBus', 'textRenderer', 'elementRegistry', 'graphicsFactory']
@@ -51,6 +41,7 @@ export default class ColorfulRenderer extends ThemeRenderer {
 
   // 已分配的颜色按 id 缓存：拖动、改属性触发的重绘不会让节点换色。
   private readonly nodePaints = new Map<string, NodePaint>()
+  private readonly flowPaints = new Map<string, NodePaint>()
   private readonly elementRegistry: RegistryLike
   private readonly graphicsFactory: FactoryLike
 
@@ -71,29 +62,47 @@ export default class ColorfulRenderer extends ThemeRenderer {
     eventBus.on('elements.delete', (event: { elements?: Element[] }) => {
       for (const element of event.elements ?? []) {
         this.nodePaints.delete(element.id)
+        this.flowPaints.delete(element.id)
       }
     })
   }
 
   private reassignPaints() {
     const shapes: Element[] = []
+    const flows: Connection[] = []
     this.elementRegistry.forEach((element) => {
       const label = (element as Element & { labelTarget?: Element }).labelTarget
-      if (element.parent && !label && !('waypoints' in element)) {
+      if (!element.parent || label) {
+        return
+      }
+      if (!('waypoints' in element)) {
         shapes.push(element)
+      } else if (is(element, 'bpmn:SequenceFlow')) {
+        flows.push(element as Connection)
       }
     })
-    const byId = new Map(shapes.map((element) => [element.id, element]))
-    for (const [id, paint] of assignPaints(shapes)) {
-      const previous = this.nodePaints.get(id)
-      this.nodePaints.set(id, paint)
+    this.applyPaints(this.nodePaints, assignPaints(shapes), shapes, 'shape')
+    this.applyPaints(this.flowPaints, assignFlowPaints(flows), flows, 'connection')
+  }
+
+  // 写入新分配的颜色，只重绘颜色真正变化的元素。
+  private applyPaints(
+    cache: Map<string, NodePaint>,
+    assigned: Map<string, NodePaint>,
+    elements: Element[],
+    type: 'shape' | 'connection',
+  ) {
+    const byId = new Map(elements.map((element) => [element.id, element]))
+    for (const [id, paint] of assigned) {
+      const previous = cache.get(id)
+      cache.set(id, paint)
       if (previous === paint) {
         continue
       }
       const element = byId.get(id)
       const gfx = element && this.elementRegistry.getGraphics(element)
       if (element && gfx) {
-        this.graphicsFactory.update('shape', element, gfx)
+        this.graphicsFactory.update(type, element, gfx)
       }
     }
   }
@@ -108,15 +117,26 @@ export default class ColorfulRenderer extends ThemeRenderer {
     return paint
   }
 
+  private flowPaintFor(element: Connection): NodePaint {
+    const cached = this.flowPaints.get(element.id)
+    if (cached) {
+      return cached
+    }
+    const paint = pickFlowPaint(element, this.flowPaints)
+    this.flowPaints.set(element.id, paint)
+    return paint
+  }
+
   drawShape(parent: SVGElement, element: Shape) {
     const patch = { ...COLORFUL, ...toPatch(this.paintFor(element)) }
     return withPalette(patch, () => super.drawShape(parent, element))
   }
 
   drawConnection(parent: SVGElement, element: Connection) {
-    return withPalette({ ...COLORFUL, stroke: flowColor(element) }, () =>
-      super.drawConnection(parent, element),
-    )
+    const stroke = is(element, 'bpmn:SequenceFlow')
+      ? this.flowPaintFor(element).edge
+      : fixedFlowColor(element)
+    return withPalette({ ...COLORFUL, stroke }, () => super.drawConnection(parent, element))
   }
 }
 

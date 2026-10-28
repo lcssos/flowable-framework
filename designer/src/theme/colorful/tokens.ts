@@ -28,9 +28,8 @@ export const COLORFUL: ThemePalette = {
   serviceIcon: '#1A6A5E',
 }
 
+// 顺序流的颜色由 node-paints.ts 按实例分配；这里只剩消息流与其他连线的固定色。
 export const FLOW_COLORS = {
   sequence: '#5B6BC0',
-  conditional: '#7A52C7',
-  default: '#64748B',
   message: '#2E8FA8',
 }

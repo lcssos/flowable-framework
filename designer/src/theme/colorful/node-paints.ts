@@ -1,6 +1,6 @@
-// 多彩主题不再用颜色表达节点类型：每个节点按 id 稳定取色，
-// 与直接相连的邻居撞色时顺延，保证同一张图内相邻节点可区分。
-import type { Element } from 'bpmn-js/lib/model/Types'
+// 多彩主题不再用颜色表达节点类型：每个节点、每条顺序流按 id 稳定取色，
+// 与直接相连的邻居撞色时顺延，保证同一张图内相邻元素可区分。
+import type { Connection, Element } from 'bpmn-js/lib/model/Types'
 import type { NodePaint } from './tokens'
 
 // 沿用各主题原有配色，浅底配深描边，保证深色文字与图标在任意底色上可读。
@@ -52,11 +52,24 @@ const neighborPaintsOf = (element: Element, painted: Map<string, NodePaint>) => 
   return paints
 }
 
-// 绘制阶段的临时取色：此时连线可能尚未创建，只按已缓存邻居避让。
-// 最终颜色由 assignPaints 在导入完成后按完整图重算，因此结果与绘制顺序无关。
-export const pickNodePaint = (element: Element, painted: Map<string, NodePaint>): NodePaint => {
-  const start = paintIndex(element.id)
-  const taken = neighborPaintsOf(element, painted)
+// 与同一节点相接的顺序流（同一源节点的分支、同一目标节点的汇入、首尾相接的前后流）
+// 靠颜色区分走向，因此流程线的邻居是「共用任一端点的其他顺序流」。
+const adjacentFlowPaintsOf = (flow: Connection, painted: Map<string, NodePaint>) => {
+  const paints = new Set<NodePaint>()
+  for (const end of [flow.source, flow.target]) {
+    for (const other of [...(end?.incoming ?? []), ...(end?.outgoing ?? [])]) {
+      const paint = other.id === flow.id ? undefined : painted.get(other.id)
+      if (paint) {
+        paints.add(paint)
+      }
+    }
+  }
+  return paints
+}
+
+// 从哈希色开始顺延，取第一组未被邻居占用的配色；色板用尽时退回哈希色。
+const firstFreePaint = (id: string, taken: Set<NodePaint>): NodePaint => {
+  const start = paintIndex(id)
   for (let offset = 0; offset < NODE_PAINTS.length; offset += 1) {
     const paint = NODE_PAINTS[(start + offset) % NODE_PAINTS.length]
     if (!taken.has(paint)) {
@@ -66,13 +79,28 @@ export const pickNodePaint = (element: Element, painted: Map<string, NodePaint>)
   return NODE_PAINTS[start] ?? NODE_PAINTS[0]
 }
 
+// 绘制阶段的临时取色：此时连线可能尚未创建，只按已缓存邻居避让。
+// 最终颜色由 assignPaints 在导入完成后按完整图重算，因此结果与绘制顺序无关。
+export const pickNodePaint = (element: Element, painted: Map<string, NodePaint>): NodePaint =>
+  firstFreePaint(element.id, neighborPaintsOf(element, painted))
+
+export const pickFlowPaint = (flow: Connection, painted: Map<string, NodePaint>): NodePaint =>
+  firstFreePaint(flow.id, adjacentFlowPaintsOf(flow, painted))
+
 // 导入时连线在所有形状之后才创建，逐个绘制拿不到邻居。这里按 id 排序后统一分配：
 // 后分配的一端必然避开先分配的一端，因此每条边两端不同色，且结果只由图决定。
-export const assignPaints = (shapes: Element[]): Map<string, NodePaint> => {
+const assignInOrder = <T extends Element>(
+  elements: T[],
+  pick: (element: T, painted: Map<string, NodePaint>) => NodePaint,
+): Map<string, NodePaint> => {
   const painted = new Map<string, NodePaint>()
-  const ordered = [...shapes].sort((left, right) => left.id.localeCompare(right.id))
-  for (const shape of ordered) {
-    painted.set(shape.id, pickNodePaint(shape, painted))
+  const ordered = [...elements].sort((left, right) => left.id.localeCompare(right.id))
+  for (const element of ordered) {
+    painted.set(element.id, pick(element, painted))
   }
   return painted
 }
+
+export const assignPaints = (shapes: Element[]) => assignInOrder(shapes, pickNodePaint)
+
+export const assignFlowPaints = (flows: Connection[]) => assignInOrder(flows, pickFlowPaint)
