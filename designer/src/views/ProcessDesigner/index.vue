@@ -68,6 +68,7 @@ const { language, theme } = storeToRefs(appStore)
 // 语言名用各自母语书写，避免切换后再去翻译语言本身。
 const languageOptions = [
   { value: 'zh-CN', label: '简体中文' },
+  { value: 'zh-TW', label: '繁體中文' },
   { value: 'en-US', label: 'English' },
   { value: 'ja-JP', label: '日本語' },
 ] as const

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
+import zhTw from 'element-plus/es/locale/lang/zh-tw'
 import en from 'element-plus/es/locale/lang/en'
 import ja from 'element-plus/es/locale/lang/ja'
 import { storeToRefs } from 'pinia'
@@ -10,6 +11,7 @@ import useAppStore, { type LanguageType } from '@/stores/modules/app.ts'
 const { language } = storeToRefs(useAppStore())
 const languages: Record<LanguageType, Language> = {
   'zh-CN': zhCn,
+  'zh-TW': zhTw,
   'en-US': en,
   'ja-JP': ja,
 }

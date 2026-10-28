@@ -87,6 +87,7 @@ The UI supports `en-US` and `zh-CN`. Browser language selects the initial locale
 - For dynamic sentences, use `$tu(chineseText, englishText)` or `translateUi(chineseText, englishText)` instead of relying on a dynamic dictionary key that cannot match.
 - Use `translateUiHtml` for static HTML help such as CodeMirror descriptions. Do not insert unlocalized visible Chinese text directly.
 - bpmn-js menus, Palette entries, and lint messages use English source text as keys. Add Chinese translations under `bpmn` in `zh-CN/index.ts`.
+- `zh-TW` (Traditional Chinese) is derived from the Simplified sources: `langs/zh-TW/index.ts` mirrors `zh-CN/index.ts`, and `langs/zh-TW/uiText.ts` maps each Simplified source string to Traditional (Taiwan usage). When adding text, also add the Traditional entry; strings missing from `uiText.ts` fall back to per-character conversion via `traditionalFallback`, and missing `ui.*` / `bpmn` keys fall back to `zh-CN`.
 - Validation rules must react to locale changes. Define static rule objects with `computed`; call `translateUi` inside custom validators at validation time.
 - Code comments and internal developer notes use Simplified Chinese. Keep the default `README.md` in English and the Chinese version in `README.zh-CN.md`; keep feature descriptions synchronized.
 
