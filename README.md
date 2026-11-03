@@ -30,6 +30,47 @@ that talks to the backend REST facade.
   token simulation, CodeMirror script editing, and multi-theme rendering
 - **HTTP-level tests** — MockMvc integration tests cover login, definitions, instances, tasks, and history
 
+## Screenshots
+
+The designer is the part of this project you can judge at a glance: a redesigned
+UI on top of `bpmn-js`, six rendering themes, and a fully translated interface.
+
+### Overview
+
+![Process designer overview](./docs/images/designer-overview.png)
+
+Blueprint-style ink theme by default: a rounded palette rail, compact floating
+context pad, card-based properties panel, and BPMN lint feedback pinned to the
+canvas bottom. The screenshot is the `leave` process shipped in
+`src/main/resources/processes/`.
+
+### Multi-language UI
+
+![Multi-language designer UI](./docs/images/designer-i18n.png)
+
+Four locales ship out of the box — Simplified Chinese, Traditional Chinese,
+English, and Japanese. The switch covers toolbar, properties panel, palette
+tooltips, context-pad captions, lint messages, and Element Plus widgets;
+`bpmn-js` text is re-rendered on locale change, so no reload is needed. The
+initial locale follows the browser (`zh-TW`/`zh-HK` map to Traditional, `ja`
+to Japanese), and the choice is persisted in Pinia.
+
+### Themes
+
+![Six designer themes](./docs/images/designer-themes.png)
+
+| Theme | Look |
+|-------|------|
+| 墨蓝 Ink (default) | Cool blue ink on paper grid |
+| 经典 Classic | Plain black-and-white BPMN, closest to the upstream look |
+| 暗色 Dark | Dark canvas and chrome for night work |
+| 琥珀 Amber | Warm brown and amber tones |
+| 多彩 Colorful | Per-node color assignment across the whole diagram |
+| 国风 Chinese Style | Ink-wash grays with a vermilion seal accent |
+
+Themes are real renderer packages (`designer/src/theme/<id>`), not just CSS
+variables, so element shapes and palette icons change with the palette.
+
 ## Tech stack
 
 | Layer | Choice |

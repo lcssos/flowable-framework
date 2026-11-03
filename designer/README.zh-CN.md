@@ -44,10 +44,14 @@
 
 ## 🖼️ 示例图
 
-<p>
-  <img alt="示例图 1" src="public/sl1.png" width="480" style="display:inline-block" />
-  <img alt="示例图 2" src="public/sl2.png" width="480" style="display:inline-block" />
-</p>
+本仓库（改动版）的截图放在仓库根目录：
+[整体界面](../docs/images/designer-overview.png) ·
+[多语言](../docs/images/designer-i18n.png) ·
+[主题](../docs/images/designer-themes.png)。详细说明见
+[根目录 README](../README.zh-CN.md#界面截图)。
+
+`public/sl1.png` / `public/sl2.png` 是上游保留的图片，展示的是**改版前**的界面，
+不代表当前效果。
 
 ## 📦 安装
 

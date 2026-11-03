@@ -28,6 +28,42 @@ BPMN 设计器，直接对接后端的 REST 接口。
   CodeMirror 脚本编辑与多主题渲染
 - **HTTP 级测试** —— 基于 MockMvc 的集成测试覆盖登录、流程定义、实例、任务与历史
 
+## 界面截图
+
+设计器是本工程一眼可见的部分：在 `bpmn-js` 之上重做的界面、6 套渲染主题、以及完整可切换的多种语言。
+
+### 整体界面
+
+![流程设计器总览](./docs/images/designer-overview.png)
+
+默认的墨蓝（ink）主题：圆角工具条、紧凑浮层操作卡片、卡片式属性面板，
+BPMN 校验结果常驻画布底部。图中流程即仓库自带的请假流程（`src/main/resources/processes/`）。
+
+### 多语言界面
+
+![多语言设计器界面](./docs/images/designer-i18n.png)
+
+内置 4 种语言 —— 简体中文、繁體中文、English、日本語。切换范围覆盖工具栏、属性面板、
+Palette 提示、操作卡片文案、BPMN 校验提示以及 Element Plus 组件；`bpmn-js` 的界面文案
+在语言切换时主动重建，无需刷新页面。首次进入按浏览器语言判定（`zh-TW`/`zh-HK` 走繁体、
+`ja` 走日文），选择结果通过 Pinia 持久化。
+
+### 主题
+
+![6 套设计器主题](./docs/images/designer-themes.png)
+
+| 主题 | 风格 |
+|------|------|
+| 墨蓝 Ink（默认） | 冷蓝墨色，纸面网格 |
+| 经典 Classic | 黑白线框，最接近上游原版 |
+| 暗色 Dark | 深色画布与深色外框，适合夜间使用 |
+| 琥珀 Amber | 暖棕与琥珀色调 |
+| 多彩 Colorful | 按节点分配配色，整图彩色 |
+| 国风 Chinese Style | 水墨灰调，朱红印章式点缀 |
+
+主题不是简单的 CSS 变量替换，而是独立的渲染包（`designer/src/theme/<id>`），
+节点绘制与 Palette 图标都会跟着换。
+
 ## 技术栈
 
 | 层次 | 选型 |

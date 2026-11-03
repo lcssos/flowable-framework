@@ -45,10 +45,15 @@ This project deeply integrates `bpmn-js` and provides Flowable-focused customiza
 
 ## 🖼️ Screenshots
 
-<p>
-  <img alt="Screenshot 1" src="public/sl1.png" width="480" style="display:inline-block" />
-  <img alt="Screenshot 2" src="public/sl2.png" width="480" style="display:inline-block" />
-</p>
+Screenshots of this (modified) designer live in the repository root:
+[overview](../docs/images/designer-overview.png) ·
+[multi-language](../docs/images/designer-i18n.png) ·
+[themes](../docs/images/designer-themes.png). See the
+[root README](../README.md#screenshots) for the full description.
+
+The `public/sl1.png` / `public/sl2.png` files are kept from upstream and show the
+**original** UI before this fork's redesign; they are not representative of the
+current interface.
 
 ## 📦 Installation
 
