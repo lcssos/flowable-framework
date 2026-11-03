@@ -8,9 +8,14 @@
 
 ---
 
+> **Fork notice**: this copy lives inside the `flowable-framework` repository and has
+> been modified from the upstream project. Upstream: [tsai996/vue-bpmn-designer](https://github.com/tsai996/vue-bpmn-designer)
+> (Apache-2.0, Copyright © 2026 tsai996). See [`../NOTICE`](../NOTICE) for the list of
+> modifications and the upstream attribution that must be preserved.
+
 ## Online Preview
 
-- Preview URL: https://tsai996.github.io/vue-bpmn-designer/
+- Upstream preview (unmodified project): https://tsai996.github.io/vue-bpmn-designer/
 
 Modern BPMN designer built with **Vue 3** + **Vite 6** + **TypeScript**.
 This project deeply integrates `bpmn-js` and provides Flowable-focused customization for diagram modeling, property editing, and BPMN lint validation out of the box.

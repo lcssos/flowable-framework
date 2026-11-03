@@ -8,9 +8,14 @@
 
 ---
 
+> **Fork 说明**：本目录位于 `flowable-framework` 仓库内，已在原项目基础上做过修改。
+> 上游项目：[tsai996/vue-bpmn-designer](https://github.com/tsai996/vue-bpmn-designer)
+> （Apache-2.0，Copyright © 2026 tsai996）。修改内容与必须保留的上游署名见
+> [`../NOTICE`](../NOTICE)。
+
 ## 在线预览
 
-- 预览地址：https://tsai996.github.io/vue-bpmn-designer/
+- 上游原版预览（非本仓库改动版）：https://tsai996.github.io/vue-bpmn-designer/
 
 基于 **Vue 3** + **Vite 6** + **TypeScript** 构建的现代化流程设计器组件。本项目深度集成了 `bpmn-js`，并针对 Flowable 规范进行了深度定制，提供了开箱即用的流程绘制、属性编辑和 BPMN lint 校验等能力。
 

@@ -1,0 +1,51 @@
+flowable-framework
+Copyright 2026 lcssos
+
+This product includes software developed at
+lcssos (https://github.com/lcssos).
+
+--------------------------------------------------------------------------
+Third-party components shipped or derived within this repository
+--------------------------------------------------------------------------
+
+1. designer/ — BPMN process designer (frontend, Vue 3 + Vite + TypeScript)
+
+   Derived from "vue-bpmn-designer" by tsai996
+     Upstream: https://github.com/tsai996/vue-bpmn-designer
+     Mirror:   https://gitee.com/cai_xiao_feng/vue-bpmn-designer
+     License:  Apache License 2.0
+     Copyright (c) 2026 tsai996
+
+   The upstream Apache-2.0 license text is preserved verbatim in
+   designer/LICENSE, and the upstream README files are kept in
+   designer/README.md and designer/README.zh-CN.md. Modifications made in
+   this repository include (non-exhaustive): multi-theme support (ink /
+   amber / colorful / china), per-node color assignment, additional
+   locales (zh-TW, ja-JP), compact context pad, and integration with the
+   backend REST facade in src/.
+
+2. Apache Flowable (org.flowable:flowable-spring-boot-starter, 7.2.0)
+   License: Apache License 2.0
+   https://www.flowable.org/
+
+3. Spring Boot (org.springframework.boot, 3.5.16)
+   License: Apache License 2.0
+   https://spring.io/projects/spring-boot
+
+4. Other Maven / npm dependencies retain their own licenses; see pom.xml
+   and designer/package.json for the full dependency list.
+
+--------------------------------------------------------------------------
+License of this repository
+--------------------------------------------------------------------------
+
+The original code in this repository (backend under src/, build files,
+documentation) is licensed under the Apache License, Version 2.0; see
+LICENSE. The designer/ subtree additionally carries the upstream
+attribution above, as required by Section 4 of the Apache License.
+
+Frontend runtime dependencies bundled by Vite (bpmn-js, diagram-js,
+bpmn-js-bpmnlint, bpmn-js-token-simulation, diagram-js-minimap,
+bpmn-moddle, element-plus, vue, etc.) are distributed under their
+respective licenses; their copyright notices travel with the packages in
+designer/node_modules and are not relicensed by this repository.
