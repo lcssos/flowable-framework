@@ -5,6 +5,7 @@ export {}
 declare global {
   interface ImportMetaEnv {
     readonly BASE_URL: string
+    readonly VITE_DEMO?: string
   }
 
   interface ImportMeta {

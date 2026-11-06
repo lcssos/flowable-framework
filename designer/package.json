@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
+    "build:demo": "run-p type-check \"build-only --mode demo {@}\" --",
     "build-only": "vite build",
     "build:dev": "vite build --mode development",
     "build:test": "vite build --mode test",

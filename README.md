@@ -1,14 +1,43 @@
 <div align="center">
 
+<img src="./docs/images/designer-overview.png" alt="BPMN process designer" width="900">
+
 # flowable-framework
 
-A Spring Boot + Flowable workflow framework with a built-in BPMN process designer.
+A Spring Boot + Flowable 7.2 workflow backend with a built-in BPMN process designer.
+
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
+[![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/projects/jdk/21/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.16-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Flowable](https://img.shields.io/badge/Flowable-7.2.0-9cf.svg)](https://www.flowable.org/)
+[![Live Demo](https://img.shields.io/badge/%E2%96%B6_Live_Demo-try_the_designer-2ea44f.svg)](https://lcssos.github.io/flowable-framework/)
+
+**[▶ Try the designer in your browser](https://lcssos.github.io/flowable-framework/)** — no install needed.
 
 English | [简体中文](./README.zh-CN.md)
 
 </div>
 
 ---
+
+## Quick start
+
+```bash
+# 1. build the designer (the backend serves it from src/main/resources/static)
+cd designer && pnpm install && pnpm build && cd ..
+
+# 2. run the backend
+./mvnw spring-boot:run
+```
+
+Open <http://localhost:8080> and sign in as `admin` / `test`.
+
+> Step 1 is not optional: a fresh clone has no prebuilt frontend, so the
+> backend alone would serve an empty page.
+
+The live demo above runs the same designer as a static site — you can model,
+theme, lint and simulate there, but open/save need this backend.
+
 
 ## Overview
 

@@ -25,6 +25,8 @@ export default {
     username: 'ユーザー名',
     password: 'パスワード',
     saved: '保存しました',
+    demoDisabled:
+      'オンラインプレビューでは開く／保存はできません。README に従ってローカルで完全版を実行してください。',
     openProcess: 'プロセスを開く',
     version: 'バージョン',
     undo: '元に戻す',

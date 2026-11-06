@@ -14,7 +14,7 @@ const script = useCustomRef<string | undefined>('script')
 const resultVariable = useCustomRef<string | undefined>('resultVariable')
 const autoStoreVariables = useCustomRef<boolean>('autoStoreVariables')
 const extensions = ref<any[]>([javascriptSupport])
-const changeScriptFormat = (val: string) => {
+const changeScriptFormat = (val: string | number | boolean | undefined) => {
   if (val === 'javascript') {
     extensions.value = [javascriptSupport]
   } else if (val === 'juel') {

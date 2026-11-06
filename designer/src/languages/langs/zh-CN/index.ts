@@ -25,6 +25,7 @@ export default {
     username: '用户名',
     password: '密码',
     saved: '已保存',
+    demoDisabled: '在线预览不支持打开与保存，请按 README 在本地运行完整版本',
     openProcess: '打开流程',
     version: '版本',
     undo: '撤销',
