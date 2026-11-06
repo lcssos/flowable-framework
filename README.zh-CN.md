@@ -1,14 +1,42 @@
 <div align="center">
 
+<img src="./docs/images/designer-overview.png" alt="BPMN 流程设计器" width="900">
+
 # flowable-framework
 
-基于 Spring Boot + Flowable 的工作流框架，内置 BPMN 流程设计器。
+基于 Spring Boot + Flowable 7.2 的工作流后端，内置 BPMN 流程设计器。
+
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
+[![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/projects/jdk/21/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.16-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Flowable](https://img.shields.io/badge/Flowable-7.2.0-9cf.svg)](https://www.flowable.org/)
+[![Live Demo](https://img.shields.io/badge/%E2%96%B6_Live_Demo-try_the_designer-2ea44f.svg)](https://lcssos.github.io/flowable-framework/)
+
+**[▶ 在浏览器中试用设计器](https://lcssos.github.io/flowable-framework/)** —— 无需安装
 
 [English](./README.md) | 简体中文
 
 </div>
 
 ---
+
+## 快速开始
+
+```bash
+# 1. 构建设计器（后端从 src/main/resources/static 提供页面）
+cd designer && pnpm install && pnpm build && cd ..
+
+# 2. 启动后端
+./mvnw spring-boot:run
+```
+
+打开 <http://localhost:8080>，用 `admin` / `test` 登录。
+
+> 第 1 步不能省略：全新克隆的仓库没有预构建前端，只启动后端会看到空白页。
+
+上方的在线 Demo 用同一份设计器以静态站点运行，可以建模、切主题、校验与模拟；
+打开和保存需要本地启动的后端。
+
 
 ## 项目简介
 

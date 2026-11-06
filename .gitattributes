@@ -1,0 +1,5 @@
+# designer/ 派生自 tsai996/vue-bpmn-designer（Apache-2.0），不计入仓库语言统计
+designer/** linguist-vendored
+
+# BPMN 定义按 XML 统计
+*.bpmn20.xml linguist-language=XML
