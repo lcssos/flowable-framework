@@ -12,3 +12,6 @@ src/main/resources/static/
 
 # Playwright CLI 调试产物（页面快照、console 日志）
 .playwright-cli/
+
+# 实现过程的临时工作区
+.superpowers/
