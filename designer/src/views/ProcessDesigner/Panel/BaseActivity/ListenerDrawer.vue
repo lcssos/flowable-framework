@@ -139,7 +139,7 @@ defineExpose({
       :size="formSize"
     >
       <el-form-item :label="$tu('事件')" prop="event">
-        <el-radio-group v-model="cloned.event">
+        <el-radio-group v-model="cloned.event as string">
           <slot name="eventOptions"></slot>
         </el-radio-group>
       </el-form-item>

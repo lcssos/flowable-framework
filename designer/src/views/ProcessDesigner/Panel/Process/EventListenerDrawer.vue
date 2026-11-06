@@ -66,12 +66,13 @@ const handleConfirm = () => {
     }
   })
 }
-const changeRethrowEvent = (rethrowEvent: boolean) => {
-  if (rethrowEvent) {
+const changeRethrowEvent = (rethrowEvent: string | number | boolean | undefined) => {
+  const flag = rethrowEvent === true
+  if (flag) {
     cloned.value = {
       events: cloned.value.events,
       element: cloned.value.element,
-      rethrowEvent: rethrowEvent,
+      rethrowEvent: flag,
       throwEvent: 'message',
       type: 'messageName',
       value: undefined,
@@ -81,7 +82,7 @@ const changeRethrowEvent = (rethrowEvent: boolean) => {
     cloned.value = {
       events: cloned.value.events,
       element: cloned.value.element,
-      rethrowEvent: rethrowEvent,
+      rethrowEvent: flag,
       type: 'class',
       value: undefined,
       entityType: '',
