@@ -50,6 +50,7 @@ import {
 } from './Palette/paletteTips'
 import { bindContextPadTips } from './ContextPad/contextPadTips'
 import { customTranslate } from './Translate'
+import { isDemoMode } from '@/demo'
 import {
   deployXml,
   getModel,
@@ -159,6 +160,10 @@ const openVisible = ref(false)
 const definitions = ref<ProcessDefinitionSummary[]>([])
 const formSize = ref('small')
 const ensureLogin = async () => {
+  // 在线 Demo 没有后端，不能弹登录框打断首屏体验
+  if (isDemoMode) {
+    return false
+  }
   if (await hasSession()) {
     return true
   }
@@ -218,6 +223,21 @@ const restoreOpenedProcess = async () => {
     await importDiagram(props.xml)
     return
   }
+  // Demo 站没有后端：固定加载随包发布的请假流程，并忽略 ?key= 参数，
+  // 避免访客带参数访问时走到取流程接口失败、退化成一幅空白图。
+  if (isDemoMode) {
+    try {
+      const response = await fetch(`${import.meta.env.BASE_URL}demo/leave.bpmn20.xml`)
+      if (!response.ok) {
+        throw new Error(`failed to load demo process: ${response.status}`)
+      }
+      await importDiagram(await xmlWithDiagram(await response.text()))
+    } catch (error) {
+      await showNewProcess()
+      showError(error)
+    }
+    return
+  }
   const key = processKeyFromUrl()
   if (!key || !(await ensureLogin())) {
     await showNewProcess()
@@ -250,6 +270,10 @@ const submitLogin = async () => {
   }
 }
 const openDefinitions = async () => {
+  if (isDemoMode) {
+    ElMessage.warning(t('ui.demoDisabled'))
+    return
+  }
   if (!(await ensureLogin())) {
     return
   }
@@ -272,6 +296,10 @@ const openProcessRow = (row: ProcessDefinitionSummary) => {
   void openDefinition(row.key)
 }
 const save = async () => {
+  if (isDemoMode) {
+    ElMessage.warning(t('ui.demoDisabled'))
+    return
+  }
   if (!(await ensureLogin())) {
     return
   }
@@ -414,7 +442,9 @@ defineExpose({
         <el-button class="design-save" :icon="Upload" @click="save">{{ $t('ui.save') }}</el-button>
         <el-popover trigger="click" :width="240" placement="bottom-end">
           <template #reference>
-            <el-button class="design-action design-action--display">{{ $t('ui.display') }}</el-button>
+            <el-button class="design-action design-action--display">{{
+              $t('ui.display')
+            }}</el-button>
           </template>
           <div class="display-menu">
             <span>{{ $t('ui.labelPositionLeft') }}</span>
@@ -453,7 +483,10 @@ defineExpose({
           </template>
         </el-dropdown>
         <el-dropdown trigger="click" popper-class="language-menu" @command="changeLanguage">
-          <el-button class="design-action design-action--language" :aria-label="$t('ui.switchLanguage')">
+          <el-button
+            class="design-action design-action--language"
+            :aria-label="$t('ui.switchLanguage')"
+          >
             {{ currentLanguageLabel }}
           </el-button>
           <template #dropdown>

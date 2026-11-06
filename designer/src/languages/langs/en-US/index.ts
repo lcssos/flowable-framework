@@ -25,6 +25,8 @@ export default {
     username: 'Username',
     password: 'Password',
     saved: 'Saved',
+    demoDisabled:
+      'This live preview does not support open or save. Run the full version locally as described in the README.',
     openProcess: 'Open process',
     version: 'Version',
     undo: 'Undo',

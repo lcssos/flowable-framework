@@ -25,6 +25,8 @@ export default {
     username: 'ユーザー名',
     password: 'パスワード',
     saved: '保存しました',
+    demoDisabled:
+      'オンラインプレビューでは開く／保存はできません。README に従ってローカルで完全版を実行してください。',
     openProcess: 'プロセスを開く',
     version: 'バージョン',
     undo: '元に戻す',
@@ -194,7 +196,8 @@ export default {
     'Missing requestUrl': 'リクエスト URL がありません',
     'Termination is superfluous.': '終了は不要です。',
     'Missing variable change type or variable name': '変数の変更タイプまたは変数名がありません',
-    'Missing collection variable or loop cardinality': 'コレクション変数またはループ回数がありません',
+    'Missing collection variable or loop cardinality':
+      'コレクション変数またはループ回数がありません',
     'A <Start Event> is not allowed in <Ad Hoc Sub Process>':
       'アドホックサブプロセスでは開始イベントを使用できません',
     'An <End Event> is not allowed in <Ad Hoc Sub Process>':

@@ -25,6 +25,7 @@ export default {
     username: '使用者名稱',
     password: '密碼',
     saved: '已儲存',
+    demoDisabled: '線上預覽不支援開啟與儲存，請依 README 在本機執行完整版本',
     openProcess: '開啟流程',
     version: '版本',
     undo: '撤銷',

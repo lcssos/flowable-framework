@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             targetNamespace="http://www.flowable.org/processdef">
+
+  <process id="leave" name="请假流程" isExecutable="true">
+
+    <startEvent id="startEvent" name="开始"/>
+
+    <userTask id="managerApproval" name="经理审批" flowable:candidateGroups="managers"/>
+
+    <exclusiveGateway id="gatewayAfterManager" name="经理审批结果"/>
+
+    <userTask id="hrApproval" name="HR审批" flowable:candidateGroups="hr"/>
+
+    <exclusiveGateway id="gatewayAfterHr" name="HR审批结果"/>
+
+    <endEvent id="endRejected" name="驳回"/>
+
+    <endEvent id="endApproved" name="批准"/>
+
+    <sequenceFlow id="flowStartToManager" sourceRef="startEvent" targetRef="managerApproval"/>
+
+    <sequenceFlow id="flowManagerToGateway" sourceRef="managerApproval" targetRef="gatewayAfterManager"/>
+
+    <sequenceFlow id="flowManagerRejected" sourceRef="gatewayAfterManager" targetRef="endRejected">
+      <conditionExpression xsi:type="tFormalExpression">${approved == false}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="flowManagerToHr" sourceRef="gatewayAfterManager" targetRef="hrApproval">
+      <conditionExpression xsi:type="tFormalExpression">${approved == true &amp;&amp; days &gt; 3}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="flowManagerApproved" sourceRef="gatewayAfterManager" targetRef="endApproved">
+      <conditionExpression xsi:type="tFormalExpression">${approved == true &amp;&amp; days &lt;= 3}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="flowHrToGateway" sourceRef="hrApproval" targetRef="gatewayAfterHr"/>
+
+    <sequenceFlow id="flowHrApproved" sourceRef="gatewayAfterHr" targetRef="endApproved">
+      <conditionExpression xsi:type="tFormalExpression">${approved == true}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="flowHrRejected" sourceRef="gatewayAfterHr" targetRef="endRejected">
+      <conditionExpression xsi:type="tFormalExpression">${approved == false}</conditionExpression>
+    </sequenceFlow>
+
+  </process>
+
+</definitions>
