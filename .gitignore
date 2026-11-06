@@ -1,6 +1,7 @@
 target/
 data/
 designer/node_modules/
+designer/dist-demo/
 .idea/
 *.iml
 .classpath
